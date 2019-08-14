@@ -18,7 +18,11 @@
     </ul>
 
     <div>
-    	{{ content }}
+    	<ul>
+    		{% for luminaire in luminaires %}
+    		    <li>{{ luminaire.id }}</li>
+    		{% endfor %}
+    	</ul>
     </div>
 </div>
 {% endblock %}

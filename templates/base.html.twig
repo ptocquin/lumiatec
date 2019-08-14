@@ -2,11 +2,63 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
-        {% block stylesheets %}{% endblock %}
+
+        <title>{% block title %}{% endblock %}</title>
+
+        {% block stylesheets %}
+			<link rel="stylesheet" href="{{ asset('build/app.css') }}">
+        {% endblock %}
+
     </head>
-    <body>
-        {% block body %}{% endblock %}
-        {% block javascripts %}{% endblock %}
+    <body style="padding-top: 60px;">
+
+		{% block navbar %}
+		<nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+
+			<a class="navbar-brand" href="{{ path('home') }}">Lumiatec</a>
+
+			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#myNavBar" aria-controls="myNavBar" aria-expanded="false" aria-label="Toggle navigation">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+
+			<div class="collapse navbar-collapse" id="myNavBar">
+				<ul class="navbar-nav mr-auto">
+					<li class="nav-item active">
+						<a class="nav-link" href="{{ path('home') }}">Home</a>
+					</li>
+				</ul>
+				<ul class="navbar-nav">
+				{% if is_granted('IS_AUTHENTICATED_FULLY') %}
+{# 					<li class="nav-item">
+						<a class="nav-link" href="{{ path('admin') }}">Admin</a>
+					</li> #}
+    				<li class="navbar-text">Welcome {{ app.user.email }} !</li>
+    				<li class="nav-item">
+						<a class="nav-link" href="{{ path('app_logout') }}">Log out</a>
+					</li>
+				{% else %}
+					<li class="nav-item">
+						<a class="nav-link" href="{{ path('app_login') }}">Log in</a>
+					</li>
+					|
+					<li class="nav-item">
+						<a class="nav-link" href="{{ path('app_register') }}">Register</a>
+					</li>
+				{% endif %}
+				</ul>
+			</div>
+		</nav>
+		{% endblock %}
+
+		<div class="container">
+        {% block body %}
+
+        {% endblock %}
+        </div>
+
+        {% block javascripts %}
+        	<script src="{{ asset('build/app.js') }}"></script>
+        {% endblock %}
+
     </body>
 </html>

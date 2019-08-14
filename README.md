@@ -35,3 +35,17 @@ yarn add --dev @fortawesome/fontawesome-free
 yarn encore dev
 
 sf4 make:controller <!-- MainController -->
+
+composer require symfony/security-bundle   
+sf4 make:user
+
+> Create and edit .env.local to set database path
+
+sf4 make:migration
+sf4 doctrine:migrations:migrate
+
+sf4 make:auth
+sf4 make:registration-form
+
+> from https://symfony.com/doc/current/security/form_login_setup.html
+> from https://symfony.com/doc/current/doctrine/registration_form.html
