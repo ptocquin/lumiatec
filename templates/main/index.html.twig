@@ -2,27 +2,96 @@
 
 {% block title %}Hello MainController!{% endblock %}
 
-{% block body %}
-<style>
-    .example-wrapper { margin: 1em auto; max-width: 800px; width: 95%; font: 18px/1.5 sans-serif; }
-    .example-wrapper code { background: #F5F5F5; padding: 2px 6px; }
-</style>
+{% block navtitle %}My Controllers{% endblock %}
 
-<div class="example-wrapper">
-    <h1>Hello {{ controller_name }}! ✅</h1>
-
-    This friendly message is coming from:
-    <ul>
-        <li>Your controller at <code><a href="{{ '/Users/ptocquin/Dropbox/Projects/lumiatec_client/src/Controller/MainController.php'|file_link(0) }}">src/Controller/MainController.php</a></code></li>
-        <li>Your template at <code><a href="{{ '/Users/ptocquin/Dropbox/Projects/lumiatec_client/templates/main/index.html.twig'|file_link(0) }}">templates/main/index.html.twig</a></code></li>
-    </ul>
-
-    <div>
-    	<ul>
-    		{% for luminaire in luminaires %}
-    		    <li>{{ luminaire.id }}</li>
-    		{% endfor %}
-    	</ul>
+{% block panelContent %}
+<div class="row">
+    {% for controller in controllers %}
+    <div class="col-sm-6 col-md-4 col-lg-3 mb-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="card-title">
+                    {{ controller.name }}
+                </h4>
+                {% if controller.status == 1 %}
+                    <button class="btn btn-block btn-danger mb-2">Disconnected</button>
+                {% else %}
+                     <button class="btn btn-block btn-success mb-2">Connected</button>
+                {% endif %}
+                <p class="card-text">
+                    {{ controller.url }}
+                </p>
+                <a class="stretched-link" href="{{ path('view-controller', {'id': controller.id }) }}">
+                </a>
+            </div>
+        </div>
     </div>
+    {% endfor %}
 </div>
 {% endblock %}
+
+{% block sideMenu %}
+{{ parent() }}
+<h5 class="my-3 text-center">
+    Actions
+</h5>
+<li class="nav-item p-1">
+    <a class="nav-link btn btn-outline-dark" href="{{ path('sync-controllers') }}">
+        <span class="fa fa-network-wired">
+            <span>
+                <span class="d-none d-md-inline">
+                    Sync remote controllers
+                </span>
+                <span class="sr-only">
+                    (current)
+                </span>
+            </span>
+        </span>
+    </a>
+</li>
+<li class="nav-item p-1">
+    <button class="nav-link btn btn-block btn-outline-dark" data-target="#modal-add" data-toggle="modal">
+        <span class="fa fa-edit">
+            <span>
+                <span class="d-none d-md-inline">
+                    Add a controller
+                </span>
+            </span>
+        </span>
+    </button>
+</li>
+<div class="modal fade" id="modal-add">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">
+                    Add a controller
+                </h4>
+                <button aria-label="Close" class="close" data-dismiss="modal" type="button">
+                    <span aria-hidden="true">
+                        ×
+                    </span>
+                    <span class="sr-only">
+                        Close
+                    </span>
+                </button>
+            </div>
+            <div class="modal-body">
+                {{ form_start(form) }}
+                {{ form_widget(form) }}
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal" type="button">
+                    Close
+                </button>
+                <button class="btn btn-light">
+                    {{ button_label|default('Save') }}
+                </button>
+                {{ form_end(form) }}
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+    {% endblock %}
