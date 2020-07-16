@@ -1,3 +1,9 @@
+## Changelog
+
+# v0.1 (20200716)
+
+- first working release with remote controle
+
 ## Log
 
 curl -sS https://get.symfony.com/cli/installer | bash
