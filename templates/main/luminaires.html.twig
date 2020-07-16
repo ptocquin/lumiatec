@@ -1,0 +1,76 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hello MainController!{% endblock %}
+
+{% block navtitle %}My Lightings{% endblock %}
+
+{% block panelContent %}
+<div class="row">
+    {% for luminaire in luminaires %}
+    <div class="col-sm-4 col-md-3 col-lg-2 mb-2">
+        <div class="card text-center ">
+            <div class="card-body">
+                <h4 class="card-title">
+                    {{ luminaire.address }}
+                </h4>
+                <p class="card-text">
+                    serial: {{ luminaire.serial }}
+                </p>
+                <p class="card-text">
+                    controller: 
+                    {% if luminaire.controller is not null %}
+                    	{{ luminaire.controller.name }}
+                    {% else %}
+                    	None
+                   	{% endif %}
+                </p>
+                <a data-toggle="modal" data-target="#modal-{{ luminaire.id }}" href="#" class="stretched-link"></a>
+        		<div class="modal fade" id="modal-{{ luminaire.id }}">
+        			<div class="modal-dialog" role="document">
+        				<div class="modal-content">
+        					<div class="modal-header">
+        						<h4 class="modal-title">Manage Lighting {{ luminaire.address }}</h4>
+        						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        							<span aria-hidden="true">&times;</span>
+        							<span class="sr-only">Close</span>
+        						</button>
+        					</div>
+        					<div class="modal-body">
+                                {% if controllers|length > 1 or luminaire.controller is null %}
+        						Click on a controller to link this lighting:
+    							{% for controller in controllers %}
+                                    {% if luminaire.controller is null %}
+                                        <a class="btn btn-block btn-primary" href="{{ path('link-controller', {'luminaire': luminaire.id, 'controller': controller.id}) }}">{{ controller.name }}</a>
+                                    {% else %}
+                                        {% if luminaire.controller.id != controller.id %}
+        							    <a class="btn btn-block btn-primary" href="{{ path('link-controller', {'luminaire': luminaire.id, 'controller': controller.id}) }}">{{ controller.name }}</a>
+                                        {% endif %}
+                                    {% endif %}
+    							{% endfor %}
+                                {% endif %}
+                                {% if luminaire.controller is not null %}
+                                    <a class="btn btn-block btn-danger" href="{{ path('unlink-controller', {'luminaire': luminaire.id, 'controller': luminaire.controller.id }) }}"> Unlink from {{ luminaire.controller.name }}</a>
+                                {% endif %}
+        					</div>
+        					<div class="modal-footer">
+        						<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        						{# <button type="button" class="btn btn-primary">Save changes</button> #}
+        					</div>
+        				</div><!-- /.modal-content -->
+        			</div><!-- /.modal-dialog -->
+        		</div><!-- /.modal -->
+                {#
+                <a class="btn btn-primary" href="{{ path('view-controller', {'id': controller.id }) }}">
+                    View
+                </a>
+                #}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block sideMenu %}
+{{ parent() }}
+{% endblock %}

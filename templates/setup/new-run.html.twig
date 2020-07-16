@@ -1,0 +1,24 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New recipe{% endblock %}
+
+{% block navtitle %}Play a recipe{% endblock %}
+
+
+{% block panelContent %}
+	<h5>Start a run on {{ cluster.controller.name }}, cluster #{{ cluster.label }}</h5>
+    <div class="m-auto pt-5">
+    {% form_theme form 
+      'bootstrap_4_layout.html.twig' %}
+    {{ form_start(form) }}
+    {{ form_row(form.start) }}
+    {{ form_row(form.label) }}
+    {{ form_row(form.description) }}
+    {{ form_row(form.program) }}
+    <div class="m-3">
+    <button class="btn">{{ button_label|default('Start') }}</button>
+    <a class="btn" href="{{ path('view-controller', {'id': cluster.controller.id}) }}">Cancel</a>
+    </div>
+    {{ form_end(form) }}
+    </div>
+{% endblock %}

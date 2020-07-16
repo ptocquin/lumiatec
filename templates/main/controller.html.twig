@@ -1,0 +1,298 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hello MainController!{% endblock %}
+
+{% block navtitle %}{{ controller.name }} :: Lightings {% endblock %}
+
+{% block panelContent %}
+<div class="container">
+{% if y_max is not null %}
+    {% for y in y_max..1 %}
+        <div class="card-group">
+            {% for x in 1..x_max %}
+            <div class="card {% if x_max > 3 %} w-{{ 100 / x_max }} {% else %} col-sm-6 col-md-4 {% endif %} text-white bg-dark border-light">
+                {% if luminaire_repo.getByXY(x,y,controller) is not null %}
+                {% set luminaire = luminaire_repo.getByXY(x,y,controller) %}
+                <div class="card-body">
+                    <div class="btn-group-vertical btn-block">
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-light" data-target="#modal-grid-{{ luminaire_repo.getByXY(x,y,controller).id }}" data-toggle="modal">
+                                {{ luminaire.address }} ({{ luminaire.colonne }},{{ luminaire.ligne }})
+                                <i class="fa fa-question">
+                                </i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="btn-group-vertical btn-block">
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-plus" type="button">
+                                <span>
+                                    +
+                                </span>
+                                <input class="cluster-label" name="cluster" type="hidden" value="{{ luminaire.cluster.label }}"></input>
+                                <input name="luminaire" type="hidden" value="{{ luminaire.address }}"></input>
+                                <input name="controller" type="hidden" value="{{ controller.id }}"></input>
+                            </button>
+                            <button class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }}" data-target="#modal-cluster-{{ luminaire.cluster.id }}" data-toggle="modal">
+                                {{ luminaire.cluster.label }}
+                            </button>
+                            <button class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-minus" {% if luminaire.cluster.label == 1 %}disabled="true"{% endif %} type="button">
+                                <span>
+                                    -
+                                </span>
+                                <input class="cluster-label" name="cluster" type="hidden" value="{{ luminaire.cluster.label }}"></input>
+                                <input name="luminaire" type="hidden" value="{{ luminaire.address }}"></input>
+                                <input name="controller" type="hidden" value="{{ controller.id }}"></input>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="card-body">
+                    <div class="btn-group-vertical btn-block">
+                        <div class="btn-group">
+                            {#
+                            <button class="btn btn-light set-address" type="button">
+                                +
+                            </button>
+                            #}
+                            <button class="btn btn-light" type="button">
+                            </button>
+                            {#
+                            <button class="btn btn-light" type="button">
+                                ok
+                            </button>
+                            #}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+{% endif %}
+</div>
+
+{% if luminaire_repo.getNotMapped(controller)|length > 0 %}
+<div class="container">
+<div class="card-group">
+    {% for luminaire in luminaire_repo.getNotMapped(controller) %}
+    <div class="col-sm-6 col-md-4 mb-2">
+        <div class="card text-center ">
+            <div class="card-body">
+                <div class="btn-group-vertical btn-block">
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-light" data-target="#modal-grid-{{ luminaire.id }}" data-toggle="modal">
+                            {{ luminaire.address }}
+                        </button>
+                    </div>
+                </div>
+                <p class="card-text">
+                    serial: {{ luminaire.serial }}
+                </p>
+                {% if luminaire.cluster is not null %}
+                <div class="btn-group-vertical btn-block">
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-plus" type="button">
+                            <span>
+                                +
+                            </span>
+                            <input name="cluster" type="hidden" value="{{ luminaire.cluster.label }}"></input>
+                            <input name="luminaire" type="hidden" value="{{ luminaire.address }}"></input>
+                            <input name="controller" type="hidden" value="{{ controller.id }}"></input>
+                        </button>
+                        <button class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }}" data-target="#modal-cluster-{{ luminaire.cluster.id }}" data-toggle="modal">
+                            {{ luminaire.cluster.label }}
+                        </button>
+                        <button class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-minus" {% if luminaire.cluster.label == 1 %}disabled="true"{% endif %} type="button">
+                            <span>
+                                -
+                            </span>
+                            <input name="cluster" type="hidden" value="{{ luminaire.cluster.label }}"></input>
+                            <input name="luminaire" type="hidden" value="{{ luminaire.address }}"></input>
+                            <input name="controller" type="hidden" value="{{ controller.id }}"></input>
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+        {#
+                <a class="btn btn-primary" href="{{ path('view-controller', {'id': controller.id }) }}">
+                    View
+                </a>
+                #}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+</div>
+{% endif %}
+
+{% for cluster in clusters %}
+<div class="modal fade" id="modal-cluster-{{ cluster.id }}">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Cluster {{ cluster.label }}</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+          <span class="sr-only">Close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="btn-group-vertical btn-block">
+          <div class="btn-group">
+            <a class="btn btn-light {% if log is not defined %}disabled{% endif %}" type="button"  href="#"><span data-feather="trending-up"></span></a>
+            <a href="{{ path('new-play', {'cluster': cluster.id }) }}" type="button" class="btn btn-light fa fa-play-circle"></a>
+            <a href="{{ path('shutdown', {'cluster': cluster.id }) }}" type="button" class="btn btn-light fa fa-stop-circle"></a>
+            <a href="{{ path('new-run', {'cluster': cluster.id }) }}" type="button" class="btn btn-light fa fa-history"></a>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+{% endfor %}
+
+{% for luminaire in controller.luminaires %}
+    <div class="modal fade" id="modal-grid-{{ luminaire.id }}">
+          <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+              <div class="modal-body justify-content-center">
+
+                <div class="row">
+                      <div class="col">
+                        <h5>Lighting {{ luminaire.id }}</h5>
+{#                       {% if log_repo.getLuminaireLastLog(luminaire.id) is not empty %}
+                        <ul>
+                          <li>Last info: {{ log_repo.getLuminaireLastLog(luminaire.id)[0].time|date("Y-m-d H:i") }}</li>
+                          <li>Channels on:</li>
+                          <ol>
+                            {% for channel in log_repo.getLuminaireLastLog(luminaire.id)[0].value['channels_on'] %}
+                                <li>{{ channel['color'] }} => {{ channel['intensity'] }}%</li>
+                            {% endfor %}
+                          </ol>
+                        </ul>
+                      {% else %}
+                        <ul>
+                          <li>No info for this lighting. Last log: {% if log_repo.getLastLog() is not empty %}
+                            {{ log_repo.getLastLog()[0].time|date("Y-m-d H:i") }}{% endif %}.
+                            <a class="" href="{{ path('update-log') }}">Refresh</a>
+                          </li>
+                        </ul>                      
+                      {% endif %} #}
+                    </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                      <div class="col">
+                      <h5>Mapping</h5>
+                      <div class="btn-group btn-group-justified align-content-center m-auto">
+                        <button id="{{ luminaire.id }}_btn_colonne"type="button" class="btn btn-primary btn-lg clk_increment">x:
+                          <span class="value">{{ luminaire.colonne | default(1) }}</span>
+                          <input type="hidden" id="{{ luminaire.id }}_colonne" name="{{ luminaire.id }}_colonne" value="1"></input>
+                        </button>
+                        <button id="{{ luminaire.id }}_btn_ligne" type="button" class="btn btn-default btn-lg clk_increment">y:
+                          <span class="value">{{ luminaire.ligne | default(1) }}</span>
+                          <input type="hidden" id="{{ luminaire.id }}_ligne" name="{{ luminaire.id }}_ligne" value="1"></input>
+                        </button>
+                        
+                        
+                      </div>
+                      <button type="button" class="btn btn-success set-position">
+                          <span>Set</span>
+                          <input type="hidden" name="set_position" value="{{ luminaire.id }}"></input>
+                          <input type="hidden" name="controller_id" value="{{ controller.id }}"></input>
+                        </button>
+                      <a href="{{ path('unmap-luminaire', {'luminaire': luminaire.id, 'controller': controller.id }) }}" class="btn btn-primary btn-danger">Unmap</a>
+                    </div>
+                  </div>
+              </div>
+
+              <div class="modal-footer">
+
+                <button type="button" class="btn btn-light" data-dismiss="modal" aria-label="Close">Cancel</button>                     
+              </div>
+            </div><!-- /.modal-content -->
+          </div><!-- /.modal-dialog -->
+        </div><!-- /.modal -->
+{% endfor %}
+
+
+{% endblock %}
+
+{% block sideMenu %}
+{{ parent() }}
+<h5 class="my-3 text-center">
+    Actions
+</h5>
+<li class="nav-item p-1">
+    <button class="nav-link btn btn-block btn-outline-dark" data-target="#modal-edit" data-toggle="modal">
+        <span class="fa fa-edit">
+            </span>
+                <span class="d-none d-md-inline">
+                    Edit controller
+                </span>
+
+    </button>
+</li>
+<li class="nav-item p-1">
+    <a class="nav-link btn btn-block btn-outline-dark" href="{{ path('sync-to-controller', {'id': controller.id }) }}">
+        <span class="fa fa-upload">
+            </span>
+                <span class="d-none d-md-inline">
+                    Sync to controller
+                </span>
+
+    </a>
+</li>
+<li class="nav-item p-1">
+    <a class="nav-link btn btn-block btn-outline-dark" href="{{ path('sync-from-controller', {'id': controller.id }) }}">
+        <span class="fa fa-download">
+            </span>
+                <span class="d-none d-md-inline">
+                    Sync from controller
+                </span>
+
+    </a>
+</li>
+<div class="modal fade" id="modal-edit">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">
+                    Edit controller
+                </h4>
+                <button aria-label="Close" class="close" data-dismiss="modal" type="button">
+                    <span aria-hidden="true">
+                        ×
+                    </span>
+                    <span class="sr-only">
+                        Close
+                    </span>
+                </button>
+            </div>
+            <div class="modal-body">
+                {{ form_start(form) }}
+            {{ form_widget(form) }}
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal" type="button">
+                    Close
+                </button>
+                <button class="btn btn-light">
+                    {{ button_label|default('Save') }}
+                </button>
+                {{ form_end(form) }}
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+<!-- /.modal -->
+{% endblock %}
