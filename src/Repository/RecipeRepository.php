@@ -4,8 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Recipe;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Symfony\Bridge\Doctrine\RegistryInterface;
-
+use Doctrine\Common\Persistence\ManagerRegistry;
 /**
  * @method Recipe|null find($id, $lockMode = null, $lockVersion = null)
  * @method Recipe|null findOneBy(array $criteria, array $orderBy = null)
@@ -14,7 +13,7 @@ use Symfony\Bridge\Doctrine\RegistryInterface;
  */
 class RecipeRepository extends ServiceEntityRepository
 {
-    public function __construct(RegistryInterface $registry)
+    public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Recipe::class);
     }

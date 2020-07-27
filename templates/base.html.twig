@@ -1,4 +1,4 @@
-{% set colors = ["primary","secondary","success","danger","warning","info"] %}
+    {% set colors = ["primary","secondary","success","danger","warning","info"] %}
 
 <!DOCTYPE html>
 <html>
@@ -32,11 +32,13 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarTop">
                 <ul class="navbar-nav ml-auto d-none d-md-block">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">
-                            ?
-                        </a>
-                    </li>
+                    {% if is_granted("IS_AUTHENTICATED_REMEMBERED") %}
+                        <li class="nav-item"><a class="nav-link" href="{{ path('app_logout') }}">
+                           {{ app.user.email }} / Logout
+                        </a></li>
+                    {% else %}
+                        <li class="nav-item"><a  class="nav-link"href="{{ path('app_login') }}">Login</a></li>
+                    {% endif %}
                 </ul>
                 <ul class="navbar-nav d-block d-md-none">
                     <div class="nav-item" href="#">

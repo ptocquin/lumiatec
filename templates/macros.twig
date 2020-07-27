@@ -1,0 +1,46 @@
+{% macro datatable(rows, cols, names, styles = "table-responsive table-inverse", action = false) %}
+	{% import _self as self %}
+    <table class="table {{ styles }}">
+		<thead>
+			<tr>
+				{% for name in names %}
+				    <th>{{ name }}</th>
+				{% endfor %}
+			</tr>
+		</thead>
+		<tbody>
+			{% for row in rows %}
+				<tr>
+					{% for col in cols %}
+					    <td>
+					    	{% if col is iterable %}
+						    	{% for c in col %}
+						    	    {{ self.get_attribute(row, c) }} 
+						    	{% endfor %}
+						    {% else %}
+						    	{{ self.get_attribute(row, col) }}
+					    	{% endif %}
+					    </td>
+					{% endfor %}
+					{% if action and routeExists(action.path) %}
+					<td>
+	                    <a href="{{ path( action.path, {'id': row.id}) }}" class="btn btn-link btn-sm">view/edit</a>
+	                </td>
+	                {% endif %}
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+{% endmacro %}
+
+{% macro get_attribute(object, attributes) %}
+    {% apply spaceless %}
+    {% set attributes = attributes|split('.') %}
+
+    {% set value = object %}
+    {% for attribute in attributes %}
+        {% set value = attribute(value, attribute|trim) is defined ? attribute(value, attribute|trim) : null %}
+    {% endfor %}
+    {{ value }}
+    {% endapply %}    
+{% endmacro %}
