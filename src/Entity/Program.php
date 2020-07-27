@@ -42,6 +42,12 @@ class Program
      */
     private $steps;
 
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     * @Groups({"program"})
+     */
+    private $uuid;
+
     public function __construct()
     {
         $this->steps = new ArrayCollection();
@@ -120,6 +126,18 @@ class Program
                 $step->setProgram(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getUuid(): ?string
+    {
+        return $this->uuid;
+    }
+
+    public function setUuid(?string $uuid): self
+    {
+        $this->uuid = $uuid;
 
         return $this;
     }
