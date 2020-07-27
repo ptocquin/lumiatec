@@ -310,10 +310,11 @@ class SetupController extends AbstractController
 			$recipes = $response->toArray();
 			foreach ($recipes as $r) {
 				$r_count += 1;
-				$recipe = $this->getDoctrine()->getRepository(Recipe::class)->findOneBy(array('label' => $r['label'], 'user' => $user->getId()));
+				$recipe = $this->getDoctrine()->getRepository(Recipe::class)->findOneBy(array('uuid' => $r['uuid'], 'user' => $user->getId()));
 				if(is_null($recipe)){
 					$r_added_count += 1;
 					$recipe = new Recipe;
+					$recipe->setUuid($r['uuid']);
 		            $recipe->setLabel($r['label']);
 		            $recipe->setDescription($r['description']);
 		            $recipe->setUser($user);
@@ -371,10 +372,11 @@ class SetupController extends AbstractController
 			$programs = $response->toArray();
 			foreach ($programs as $p) {
 				$p_count += 1;
-				$program = $this->getDoctrine()->getRepository(Program::class)->findOneBy(array('label' => $p['label'], 'user' => $user->getId()));
+				$program = $this->getDoctrine()->getRepository(Program::class)->findOneBy(array('uuid' => $p['uuid'], 'user' => $user->getId()));
 				if(is_null($program)){
 					$p_added_count += 1;
 					$program = new Program;
+					$program->setUuid($p['uuid']);
 					$program->setUser($user);
 					$program->setLabel($p['label']);
 					$program->setDescription($p['description']);
@@ -384,7 +386,7 @@ class SetupController extends AbstractController
 						$step->setRank($s['rank']);
 						$step->setValue($s['value']);
 						if(!is_null($s['recipe'])){
-							$recipe = $this->getDoctrine()->getRepository(Recipe::class)->findOneBy(array('label' => $s['recipe']['label'], 'user' => $user->getId()));
+							$recipe = $this->getDoctrine()->getRepository(Recipe::class)->findOneBy(array('uuid' => $s['recipe']['uuid'], 'user' => $user->getId()));
 							$step->setRecipe($recipe);
 						}
 						$em->persist($step);
@@ -871,6 +873,8 @@ class SetupController extends AbstractController
 
         $recipe = new Recipe;
         $recipe->setUser($user);
+        $uuid = uuid_create(UUID_TYPE_RANDOM);
+        $recipe->setUuid($uuid);
         foreach ($leds as $led) {
             $ingredient = new Ingredient;
             $ingredient->setLed($led);
@@ -1018,6 +1022,8 @@ class SetupController extends AbstractController
         $em = $this->getDoctrine()->getManager();
 
         $program = new Program;
+        $uuid = uuid_create(UUID_TYPE_RANDOM);
+        $program->setUuid($uuid);
         $program->setUser($user);
         $form = $this->createForm(ProgramType::class, $program);
 
@@ -1083,7 +1089,7 @@ class SetupController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $data = $form->getData();
-            $program = $this->getDoctrine()->getRepository(Program::class)->find($data['program']);
+            $program = $this->getDoctrine()->getRepository(Program::class)->find($data['uuid']);
 
             $classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader(new AnnotationReader()));
 	    	$normalizer = new ObjectNormalizer($classMetadataFactory);
