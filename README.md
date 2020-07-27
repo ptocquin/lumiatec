@@ -1,7 +1,9 @@
 ## Changelog
 
-# v0.1.6 (20200727)
+# v0.1.7 (20200727)
 - vpn integration + login/logout update + uuid in recipe and program
+- checking existing recipes and programs based on uuid
+
 
 # v0.1 (20200716)
 - first working release with remote controle
