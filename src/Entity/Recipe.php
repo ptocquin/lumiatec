@@ -48,6 +48,12 @@ class Recipe
      */
     private $steps;
 
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     * @Groups({"recipe","program"})
+     */
+    private $uuid;
+
     public function __toString(){
         return $this->label;
     }
@@ -157,6 +163,18 @@ class Recipe
                 $step->setRecipe(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getUuid(): ?string
+    {
+        return $this->uuid;
+    }
+
+    public function setUuid(?string $uuid): self
+    {
+        $this->uuid = $uuid;
 
         return $this;
     }
