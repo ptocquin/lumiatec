@@ -55,3 +55,11 @@ sf4 make:registration-form
 
 > from https://symfony.com/doc/current/security/form_login_setup.html
 > from https://symfony.com/doc/current/doctrine/registration_form.html
+
+
+# VPN
+
+   44  curl -L https://install.pivpn.io | bash
+   46  sudo apt-get update
+   47  sudo apt-get upgrade
+   48  pivpn add

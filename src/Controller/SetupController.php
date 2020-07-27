@@ -77,6 +77,57 @@ class SetupController extends AbstractController
     }
 
     /**
+     * @Route("/check-controllers", name="check-controllers")
+     */
+    public function checkControllers(Request $request)
+    {
+    	$session = new Session;
+
+        $auth_checker = $this->get('security.authorization_checker');
+        $token = $this->get('security.token_storage')->getToken();
+        $user = $token->getUser();
+
+    	$em = $this->getDoctrine()->getManager();
+
+    	$controllers = $user->getControllers();
+
+    	foreach ($controllers as $controller) {
+
+    		$httpClient = HttpClient::create(['headers' => [
+				    'X-AUTH-TOKEN' => $controller->getAuthToken(),
+				]]);
+	    	$base_url = $controller->getUrl();
+
+			try {
+				$response = $httpClient->request('GET', $base_url.'/api/luminaires', ['headers' => ['accept' =>'application/json'], 'timeout' => 2]);
+				$statusCode = $response->getStatusCode();
+
+			} catch (\Exception $e) {
+				$controller->setStatus(1);
+				$em->flush();
+				$session->getFlashBag()->add(
+			        'info',
+			        'The controller ('.$controller->getName().') was not reachable... '
+			    );
+			    continue;
+			}
+
+			$controller->setStatus(0);
+
+			if ($statusCode != 200) {
+				$session->getFlashBag()->add(
+			        'info',
+			        'The request failed with status code: '.$statusCode
+			    );
+			    continue;
+				
+			}
+		}
+
+		return $this->redirectToRoute('home');
+	}
+
+    /**
      * @Route("/sync-controllers", name="sync-controllers")
      */
     public function syncControllers(Request $request)
@@ -106,7 +157,7 @@ class SetupController extends AbstractController
 	    	$base_url = $controller->getUrl();
 
 			try {
-				$response = $httpClient->request('GET', $base_url.'/api/luminaires', ['headers' => ['accept' =>'application/json'], 'timeout' => 20]);
+				$response = $httpClient->request('GET', $base_url.'/api/luminaires', ['headers' => ['accept' =>'application/json'], 'timeout' => 2]);
 				$statusCode = $response->getStatusCode();
 
 			} catch (\Exception $e) {

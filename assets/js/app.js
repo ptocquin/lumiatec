@@ -2,9 +2,12 @@
 require('../css/app.scss');
 
 const $ = require('jquery');
+global.$ = global.jQuery = $;
 // var $ = require('jquery');
 
 require('bootstrap');
+require('datatables.net-bs4');
+require('datatables.net-buttons-bs4');
 
 require('./jquery.collection.js');
 
@@ -19,7 +22,11 @@ Routing.setRoutingData(routes);
 console.log(Routing.generate('set-cluster'));
 
 
-$(document).ready(function () {
+jQuery(document).ready(function () {
+	console.log('1. Hello Webpack Encore! Edit me in assets/js/app.js');
+
+
+	$('.table').DataTable();
 
 	$('.alert').fadeOut(5000);
 
@@ -126,6 +133,4 @@ $(document).ready(function () {
 		$(".value", this).html(next);
 	});
 
-})	
-
-console.log('Hello Webpack Encore! Edit me in assets/js/app.js');
+});

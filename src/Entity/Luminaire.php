@@ -86,6 +86,11 @@ class Luminaire
         $this->logs = new ArrayCollection();
     }
 
+    public function __toString()
+    {
+        return strval($this->address);
+    }
+
     public function getId(): ?int
     {
         return $this->id;
