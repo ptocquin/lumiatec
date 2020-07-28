@@ -1,5 +1,8 @@
 ## Changelog
 
+# v0.1.8 (20200728)
+- adding run management
+
 # v0.1.7 (20200727)
 - vpn integration + login/logout update + uuid in recipe and program
 - checking existing recipes and programs based on uuid
