@@ -24,7 +24,7 @@
 					{% endfor %}
 					{% if action and routeExists(action.path) %}
 					<td>
-	                    <a href="{{ path( action.path, {'id': row.id}) }}" class="btn btn-link btn-sm">view/edit</a>
+	                    <a href="{{ path( action.path, {'id': row.id}) }}" class="btn btn-link btn-sm">{{ action.label }}</a>
 	                </td>
 	                {% endif %}
 				</tr>
@@ -41,6 +41,10 @@
     {% for attribute in attributes %}
         {% set value = attribute(value, attribute|trim) is defined ? attribute(value, attribute|trim) : null %}
     {% endfor %}
-    {{ value }}
+    {% if value.timestamp is defined %}
+	    {{ value|date('Y-m-d H:i:s') }}
+	{% else %}
+	    {{ value }}
+	{% endif %}
     {% endapply %}    
 {% endmacro %}

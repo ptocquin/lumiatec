@@ -35,7 +35,8 @@ use App\Entity\Ingredient;
 use App\Entity\Program;
 use App\Entity\Step;
 use App\Entity\Log;
-
+use App\Entity\Run;
+use App\Entity\RunStep;
 
 
 use App\Form\ControllerType;
@@ -144,9 +145,11 @@ class SetupController extends AbstractController
     	$c_count = 0; // compteur controllers
     	$l_count = 0; // compteur luminaires totaux
     	$r_count = 0; // compteur des recettes totales
+    	$ru_count = 0; // compteur des runs totaux
     	$p_count = 0; // compteur des programmes totaux
     	$p_added_count = 0; // compteur des programmes ajoutés
     	$r_added_count = 0; // compteur des recettes ajoutées
+    	$ru_added_count = 0; // compteur des runs ajoutés
     	$l_added_count = 0; // compteur luminaires ajoutés (nouveaux)
 
     	foreach ($controllers as $controller) {
@@ -284,6 +287,8 @@ class SetupController extends AbstractController
 				}
 			}
 
+			$em->flush();
+
 			// Sync Recipes
 			try {
 				$response = $httpClient->request('GET', $base_url.'/api/recipes', ['headers' => ['accept' =>'application/json'], 'timeout' => 20]);
@@ -346,6 +351,8 @@ class SetupController extends AbstractController
 				}
 			}
 
+			$em->flush();
+
 			// Sync Program
 			try {
 				$response = $httpClient->request('GET', $base_url.'/api/programs', ['headers' => ['accept' =>'application/json'], 'timeout' => 20]);
@@ -396,13 +403,72 @@ class SetupController extends AbstractController
 				}
 			}
 
+			$em->flush();
+
+			// Sync Run
+			try {
+				$response = $httpClient->request('GET', $base_url.'/api/runs', ['headers' => ['accept' =>'application/json'], 'timeout' => 20]);
+				$statusCode = $response->getStatusCode();
+
+			} catch (\Exception $e) {
+				$controller->setStatus(1);
+				$em->flush();
+				$session->getFlashBag()->add(
+			        'info',
+			        'The controller ('.$controller->getName().') was not reachable... '
+			    );
+			    continue;
+			}
+
+			if ($statusCode != 200) {
+				$session->getFlashBag()->add(
+			        'info',
+			        'The request failed with status code: '.$statusCode
+			    );
+				
+			}
+
+			$runs = $response->toArray();
+			foreach ($runs as $r) {
+				$ru_count += 1;
+				$run = $this->getDoctrine()->getRepository(Run::class)->findOneBy(array('uuid' => $r['uuid'], 'user' => $user->getId()));
+				if(is_null($run)){
+					$ru_added_count += 1;
+					$run = new Run;
+					$run->setUuid($r['uuid']);
+					$run->setUser($user);
+					$run->setLabel($r['label']);
+					$run->setDescription($r['description']);
+					$run->setStart(new \DateTime($r['start']));
+					$run->setDateEnd(new \DateTime($r['dateend']));
+					$run->setStatus($r['status']);
+					if(!is_null($r['cluster'])){
+						$cluster = $this->getDoctrine()->getRepository(Cluster::class)->findOneBy(array('label' => $r['cluster']['label'], 'controller' => $controller));
+						$run->setCluster($cluster);
+					}
+					if(!is_null($r['program'])){
+						$program = $this->getDoctrine()->getRepository(Program::class)->findOneBy(array('uuid' => $r['program']['uuid'], 'user' => $user->getId()));
+						$run->setProgram($program);
+					}
+					foreach ($r['steps'] as $s) {
+						$step = new RunStep;
+						$step->setStart(new \DateTime($s['start']));
+						$step->setCommand($s['command']);
+						$step->setStatus($s['status']);
+						$em->persist($step);
+						$run->addRunStep($step);
+					}
+					$em->persist($run);
+				}
+			}
+
     	}
 
     	$em->flush();
 
     	$session->getFlashBag()->add(
                     'info',
-                    $c_count.' Controller(s) tested, '.$l_count.' lighting(s) founds and '.$l_added_count.' new lighting(s) added. '.$r_count.' recipe(s) founds and '.$r_added_count.' new recipe(s) added.'
+                    $c_count.' Controller(s) tested, '.$l_count.' lighting(s) founds and '.$l_added_count.' new lighting(s) added. '.$r_count.' recipe(s) founds and '.$r_added_count.' new recipe(s) added. '.$ru_count.' run(s) founds and '.$ru_added_count.' new run(s) added.'
                 );
 
     	return $this->redirectToRoute('home');
@@ -1089,14 +1155,19 @@ class SetupController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $data = $form->getData();
-            $program = $this->getDoctrine()->getRepository(Program::class)->find($data['uuid']);
+            
+            $program = $this->getDoctrine()->getRepository(Program::class)->find($data['program']);
+
+	        $uuid = uuid_create(UUID_TYPE_RANDOM);
+            $data['uuid'] = $uuid;
+	        $now = $data['start'];
 
             $classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader(new AnnotationReader()));
 	    	$normalizer = new ObjectNormalizer($classMetadataFactory);
 			$serializer = new Serializer([$normalizer]);
 
-			$program = $serializer->normalize($program, null, ['groups' => 'program']);
-			$data = array("cluster" => $cluster->getLabel(), "run" => $data, "program" => $program);
+			$pp = $serializer->normalize($program, null, ['groups' => 'program']);
+			$dd = array("cluster" => $cluster->getLabel(), "run" => $data, "program" => $pp);
 
 			// die(print_r(json_encode($data)));
 	    	
@@ -1105,10 +1176,107 @@ class SetupController extends AbstractController
 				]]);
     		$base_url = $controller->getUrl();
 			$response = $httpClient->request('POST', $base_url.'/remote/run', 
-				['json' => $data]
+				['json' => $dd]
 			);
 
 			$statusCode = $response->getStatusCode();
+
+			if($statusCode == 200){
+
+				// Add Run to remote database
+	            $run = new Run;
+	        	$run->setUuid($uuid);
+		        $run->setStart($now);
+		        $run->setLabel($data['label']);
+		        $run->setDescription($data['description']);
+		        $run->setCluster($cluster);
+		        $run->setProgram($program);
+		        $run->setUser($user);
+
+		        $em->persist($run);
+		        $em->flush();
+
+		        // dd($data);
+
+		        # Fetch lightings addresses
+		        $luminaires = $cluster->getLuminaires();
+		        $list = " --address ";
+		        foreach ($luminaires as $luminaire) {
+		            $list .= $luminaire->getAddress()." ";
+		        }
+
+		        # Fetch Steps
+		        $steps = $program->getSteps();
+
+		        # Start
+		        $start = $now;
+		        $goto = -1;
+		        $step_index = 0;
+
+		        while ($step_index < count($steps)) {
+		            $step = $steps[$step_index];
+		            $type = $step->getType();
+
+		            switch ($type) {
+		                case "time":
+		                    list($hours, $minutes) = explode(':', $step->getValue(), 2);
+		                    $step_duration = $minutes * 60 + $hours * 3600;
+		                    $commands = [];
+		                    $ingredients = $step->getRecipe()->getIngredients();
+		                    foreach ($ingredients as $ingredient) {
+		                        $level = $ingredient->getLevel();
+		                        $led = $ingredient->getLed();
+		                        $color = $led->getType()."_".$led->getWavelength();
+		                        $commands[] = $color." ".$level;
+		                    }
+		                    $cmd = $this->getParameter('app.velire_cmd').$list." --exclusive --set-power 1 --set-colors ".implode(" ", $commands);
+		                    $start = $start->add(new \DateInterval('PT'.$step_duration.'S'));
+		                    $new_step = new RunStep();
+		                    $new_step->setRun($run);
+		                    $new_step->setStart($start);
+		                    $new_step->setCommand($cmd);
+		                    $new_step->setStatus(0);
+		                    $em->persist($new_step);
+		                    $em->flush();
+		                    $step_index = $step_index + 1;
+		                    // die(print_r($start));
+		                    break;
+		                case "off":
+		                    list($hours, $minutes) = explode(':', $step->getValue(), 2);
+		                    $step_duration = $minutes * 60 + $hours * 3600;
+		                    $cmd = $this->getParameter('app.velire_cmd').$list." --shutdown";
+		                    $start = $start->add(new \DateInterval('PT'.$step_duration.'S'));
+		                    $new_step = new RunStep();
+		                    $new_step->setRun($run);
+		                    $new_step->setStart($start);
+		                    $new_step->setCommand($cmd);
+		                    $new_step->setStatus(0);
+		                    $em->persist($new_step);
+		                    $em->flush();
+		                    $step_index = $step_index + 1;
+		                    // die(print_r($cmd));
+		                    break;
+		                case "goto":
+		                    list($s, $n) = explode(':', $step->getValue(), 2);
+		                    if($goto < 0){
+		                        $goto = $n;
+		                    } elseif ($goto == 0) {
+		                        $goto = -1;
+		                        $step_index = $step_index + 1;
+		                    } elseif ($goto > 0) {
+		                        $step_index = $s;
+		                        $goto = $goto - 1;
+		                    }
+		                    break;
+		            }
+		        }
+
+		        $run->setDateEnd($start);
+		        $em->persist($run);
+		        $em->flush(); 
+
+			}
+
 			$content = $response->getContent();
 
 			$session->getFlashBag()->add(
@@ -1125,4 +1293,58 @@ class SetupController extends AbstractController
             'navtitle' => 'New Play',
         ]);
     }
+
+    /**
+     * @Route("/run/delete/{id}", name="delete-run")
+     */
+    public function deleteRun(Request $request, Run $run)
+    {
+        $session = new Session;
+        $em = $this->getDoctrine()->getManager();
+
+        $auth_checker = $this->get('security.authorization_checker');
+        $token = $this->get('security.token_storage')->getToken();
+        $user = $token->getUser();
+
+        $controller = $run->getCluster()->getController();
+
+
+        $classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader(new AnnotationReader()));
+    	$normalizer = new ObjectNormalizer($classMetadataFactory);
+		$serializer = new Serializer([$normalizer]);
+
+		$dd = array("uuid" => $run->getUuid());
+
+		// dd(json_encode($dd));
+    	
+    	$httpClient = HttpClient::create(['headers' => [
+			    'X-AUTH-TOKEN' => $controller->getAuthToken(),
+			]]);
+		$base_url = $controller->getUrl();
+		$response = $httpClient->request('POST', $base_url.'/remote/run/delete', 
+			['json' => $dd]
+		);
+
+		$statusCode = $response->getStatusCode();
+
+		if($statusCode == 200){
+			$steps = $run->getRunSteps();
+	        foreach ($steps as $step) {
+	            $em->remove($step);
+	        }
+			$em->remove($run);
+			$em->flush();
+		}
+
+		$content = $response->getContent();
+
+		$session->getFlashBag()->add(
+                'info',
+                $content
+            );
+
+        return $this->redirectToRoute('view-controller', ['id' => $controller->getId()]);        
+
+    }
+
 }

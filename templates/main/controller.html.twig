@@ -146,8 +146,25 @@
             <a class="btn btn-light {% if log is not defined %}disabled{% endif %}" type="button"  href="#"><span data-feather="trending-up"></span></a>
             <a href="{{ path('new-play', {'cluster': cluster.id }) }}" type="button" class="btn btn-light fa fa-play-circle"></a>
             <a href="{{ path('shutdown', {'cluster': cluster.id }) }}" type="button" class="btn btn-light fa fa-stop-circle"></a>
-            <a href="{{ path('new-run', {'cluster': cluster.id }) }}" type="button" class="btn btn-light fa fa-history"></a>
+            <a href="{{ path('new-run', {'cluster': cluster.id }) }}" type="button" class="btn btn-light fa fa-history">
+                {% set runs = run_repo.getRunningRunsForCluster(cluster.id) %}
+              {% if runs|length > 0 %}
+                <span data-feather="clock" style="color: green;" data-toggle="tooltip" data-placement="top" title="{{ runs|length }} running program"></span> 
+              {% else %}
+                <span style="color: red;" data-feather="clock" data-toggle="tooltip" data-placement="top" title="No running programs"></span> 
+              {% endif %}
+            </a>
           </div>
+            {% if runs|length > 0 %}
+            <div class="btn-group-vertical btn-block">
+              {% for run in runs %}
+                <div class="btn-group" role="group" aria-label="Basic example">
+                  <button type="button" class="btn btn-success">Run: {{ run.label }} // {{ run.start|date("Y-m-d H:i:s") }}</button>
+                  <a class="btn btn-light fa fa-trash" type="button"  href="{{ path('delete-run', {'run': run.id }) }}"></span></a>
+                </div>
+              {% endfor %}
+            </div>
+            {% endif %}
         </div>
       </div>
       <div class="modal-footer">
@@ -166,7 +183,7 @@
 
                 <div class="row">
                       <div class="col">
-                        <h5>Lighting {{ luminaire.id }}</h5>
+                        <h5>Lighting {{ luminaire.address }}</h5>
 {#                       {% if log_repo.getLuminaireLastLog(luminaire.id) is not empty %}
                         <ul>
                           <li>Last info: {{ log_repo.getLuminaireLastLog(luminaire.id)[0].time|date("Y-m-d H:i") }}</li>
@@ -239,6 +256,16 @@
                 </span>
 
     </button>
+</li>
+<li class="nav-item p-1">
+    <a class="nav-link btn btn-block btn-outline-dark" href="{{ path('view-runs', {'controller': controller.id }) }}">
+        <span class="fa fa-eye">
+            </span>
+                <span class="d-none d-md-inline">
+                    View runs
+                </span>
+
+    </a>
 </li>
 <li class="nav-item p-1">
     <a class="nav-link btn btn-block btn-outline-dark" href="{{ path('sync-to-controller', {'id': controller.id }) }}">

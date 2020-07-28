@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+{% import 'macros.twig' as macros %}
+
+{% block title %}Hello MainController!{% endblock %}
+
+{% block navtitle %}{{ controller.name }} :: Lightings {% endblock %}
+
+{% block panelContent %}
+<div class="container">
+    <div class="row">
+    {{ macros.datatable(
+        runs,
+        ['label','cluster', 'start', 'dateEnd', 'status'],
+        ['Label', 'Cluster', 'Start', 'End', 'Status', 'Actions'],
+        'table-sm',
+        {'path':'delete-run', 'label': 'delete'})
+    }}
+
+
+</div>
+
+</div>
+
+{% endblock %}
+
+{% block sideMenu %}
+{{ parent() }}
+<h5 class="my-3 text-center">
+    Actions
+</h5>
+<li class="nav-item p-1">
+    <a class="nav-link btn btn-block btn-outline-dark" href="{{ path('view-controller', {'id': controller.id }) }}">
+        <span class="fa fa-backward">
+            </span>
+                <span class="d-none d-md-inline">
+                    Back
+                </span>
+
+    </a>
+</li>
+<!-- /.modal -->
+{% endblock %}
