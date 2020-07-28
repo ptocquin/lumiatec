@@ -160,7 +160,7 @@
               {% for run in runs %}
                 <div class="btn-group" role="group" aria-label="Basic example">
                   <button type="button" class="btn btn-success">Run: {{ run.label }} // {{ run.start|date("Y-m-d H:i:s") }}</button>
-                  <a class="btn btn-light fa fa-trash" type="button"  href="{{ path('delete-run', {'run': run.id }) }}"></span></a>
+                  <a class="btn btn-light fa fa-trash" type="button"  href="{{ path('delete-run', {'id': run.id }) }}"></span></a>
                 </div>
               {% endfor %}
             </div>
