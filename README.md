@@ -1,6 +1,6 @@
 ## Changelog
 
-# v0.1.8 (20200728)
+# v0.1.9 (20200728)
 - adding run management
 
 # v0.1.7 (20200727)
