@@ -57,6 +57,11 @@ class User implements UserInterface
      */
     private $programs;
 
+    /**
+     * @ORM\OneToMany(targetEntity=Run::class, mappedBy="user")
+     */
+    private $runs;
+
 
     public function __construct()
     {
@@ -65,6 +70,7 @@ class User implements UserInterface
         $this->luminaires = new ArrayCollection();
         $this->recipes = new ArrayCollection();
         $this->programs = new ArrayCollection();
+        $this->runs = new ArrayCollection();
     }
 
     public function __toString()
@@ -256,6 +262,37 @@ class User implements UserInterface
             // set the owning side to null (unless already changed)
             if ($program->getUser() === $this) {
                 $program->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Run[]
+     */
+    public function getRuns(): Collection
+    {
+        return $this->runs;
+    }
+
+    public function addRun(Run $run): self
+    {
+        if (!$this->runs->contains($run)) {
+            $this->runs[] = $run;
+            $run->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRun(Run $run): self
+    {
+        if ($this->runs->contains($run)) {
+            $this->runs->removeElement($run);
+            // set the owning side to null (unless already changed)
+            if ($run->getUser() === $this) {
+                $run->setUser(null);
             }
         }
 

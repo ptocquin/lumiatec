@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20200727105311 extends AbstractMigration
+final class Version20200727143305 extends AbstractMigration
 {
     public function getDescription() : string
     {
@@ -20,7 +20,6 @@ final class Version20200727105311 extends AbstractMigration
     public function up(Schema $schema) : void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('DROP TABLE migration_versions');
         $this->addSql('DROP INDEX IDX_A2F98E47DC90A29E');
         $this->addSql('DROP INDEX IDX_A2F98E47B262EAC9');
         $this->addSql('CREATE TEMPORARY TABLE __temp__channel AS SELECT id, luminaire_id, led_id, channel, i_peek FROM channel');
@@ -91,19 +90,37 @@ final class Version20200727105311 extends AbstractMigration
         $this->addSql('DROP TABLE __temp__pcb');
         $this->addSql('CREATE INDEX IDX_46DC8952DC90A29E ON pcb (luminaire_id)');
         $this->addSql('DROP INDEX IDX_92ED7784A76ED395');
-        $this->addSql('CREATE TEMPORARY TABLE __temp__program AS SELECT id, user_id, label, description FROM program');
+        $this->addSql('CREATE TEMPORARY TABLE __temp__program AS SELECT id, user_id, label, description, uuid FROM program');
         $this->addSql('DROP TABLE program');
-        $this->addSql('CREATE TABLE program (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, user_id INTEGER DEFAULT NULL, label VARCHAR(255) NOT NULL COLLATE BINARY, description CLOB DEFAULT NULL COLLATE BINARY, uuid VARCHAR(255) DEFAULT NULL, CONSTRAINT FK_92ED7784A76ED395 FOREIGN KEY (user_id) REFERENCES user (id) NOT DEFERRABLE INITIALLY IMMEDIATE)');
-        $this->addSql('INSERT INTO program (id, user_id, label, description) SELECT id, user_id, label, description FROM __temp__program');
+        $this->addSql('CREATE TABLE program (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, user_id INTEGER DEFAULT NULL, label VARCHAR(255) NOT NULL COLLATE BINARY, description CLOB DEFAULT NULL COLLATE BINARY, uuid VARCHAR(255) DEFAULT NULL COLLATE BINARY, CONSTRAINT FK_92ED7784A76ED395 FOREIGN KEY (user_id) REFERENCES user (id) NOT DEFERRABLE INITIALLY IMMEDIATE)');
+        $this->addSql('INSERT INTO program (id, user_id, label, description, uuid) SELECT id, user_id, label, description, uuid FROM __temp__program');
         $this->addSql('DROP TABLE __temp__program');
         $this->addSql('CREATE INDEX IDX_92ED7784A76ED395 ON program (user_id)');
         $this->addSql('DROP INDEX IDX_DA88B137A76ED395');
-        $this->addSql('CREATE TEMPORARY TABLE __temp__recipe AS SELECT id, user_id, label, description FROM recipe');
+        $this->addSql('CREATE TEMPORARY TABLE __temp__recipe AS SELECT id, user_id, label, description, uuid FROM recipe');
         $this->addSql('DROP TABLE recipe');
-        $this->addSql('CREATE TABLE recipe (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, user_id INTEGER DEFAULT NULL, label VARCHAR(255) NOT NULL COLLATE BINARY, description CLOB DEFAULT NULL COLLATE BINARY, uuid VARCHAR(255) DEFAULT NULL, CONSTRAINT FK_DA88B137A76ED395 FOREIGN KEY (user_id) REFERENCES user (id) NOT DEFERRABLE INITIALLY IMMEDIATE)');
-        $this->addSql('INSERT INTO recipe (id, user_id, label, description) SELECT id, user_id, label, description FROM __temp__recipe');
+        $this->addSql('CREATE TABLE recipe (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, user_id INTEGER DEFAULT NULL, label VARCHAR(255) NOT NULL COLLATE BINARY, description CLOB DEFAULT NULL COLLATE BINARY, uuid VARCHAR(255) DEFAULT NULL COLLATE BINARY, CONSTRAINT FK_DA88B137A76ED395 FOREIGN KEY (user_id) REFERENCES user (id) NOT DEFERRABLE INITIALLY IMMEDIATE)');
+        $this->addSql('INSERT INTO recipe (id, user_id, label, description, uuid) SELECT id, user_id, label, description, uuid FROM __temp__recipe');
         $this->addSql('DROP TABLE __temp__recipe');
         $this->addSql('CREATE INDEX IDX_DA88B137A76ED395 ON recipe (user_id)');
+        $this->addSql('DROP INDEX IDX_5076A4C0A76ED395');
+        $this->addSql('DROP INDEX IDX_5076A4C03EB8070A');
+        $this->addSql('DROP INDEX IDX_5076A4C0C36A3328');
+        $this->addSql('CREATE TEMPORARY TABLE __temp__run AS SELECT id, cluster_id, program_id, user_id, start, label, description, date_end, status, uuid FROM run');
+        $this->addSql('DROP TABLE run');
+        $this->addSql('CREATE TABLE run (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, cluster_id INTEGER DEFAULT NULL, program_id INTEGER DEFAULT NULL, user_id INTEGER DEFAULT NULL, start DATETIME DEFAULT NULL, label VARCHAR(255) DEFAULT NULL COLLATE BINARY, description CLOB DEFAULT NULL COLLATE BINARY, date_end DATETIME DEFAULT NULL, status VARCHAR(255) DEFAULT NULL COLLATE BINARY, uuid VARCHAR(255) DEFAULT NULL COLLATE BINARY, CONSTRAINT FK_5076A4C0C36A3328 FOREIGN KEY (cluster_id) REFERENCES cluster (id) NOT DEFERRABLE INITIALLY IMMEDIATE, CONSTRAINT FK_5076A4C03EB8070A FOREIGN KEY (program_id) REFERENCES program (id) NOT DEFERRABLE INITIALLY IMMEDIATE, CONSTRAINT FK_5076A4C0A76ED395 FOREIGN KEY (user_id) REFERENCES user (id) NOT DEFERRABLE INITIALLY IMMEDIATE)');
+        $this->addSql('INSERT INTO run (id, cluster_id, program_id, user_id, start, label, description, date_end, status, uuid) SELECT id, cluster_id, program_id, user_id, start, label, description, date_end, status, uuid FROM __temp__run');
+        $this->addSql('DROP TABLE __temp__run');
+        $this->addSql('CREATE INDEX IDX_5076A4C0A76ED395 ON run (user_id)');
+        $this->addSql('CREATE INDEX IDX_5076A4C03EB8070A ON run (program_id)');
+        $this->addSql('CREATE INDEX IDX_5076A4C0C36A3328 ON run (cluster_id)');
+        $this->addSql('DROP INDEX IDX_DF47A11884E3FEC4');
+        $this->addSql('CREATE TEMPORARY TABLE __temp__run_step AS SELECT id, run_id, start, command, status FROM run_step');
+        $this->addSql('DROP TABLE run_step');
+        $this->addSql('CREATE TABLE run_step (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, run_id INTEGER DEFAULT NULL, start DATETIME NOT NULL, command VARCHAR(255) NOT NULL COLLATE BINARY, status INTEGER NOT NULL, CONSTRAINT FK_DF47A11884E3FEC4 FOREIGN KEY (run_id) REFERENCES run (id) NOT DEFERRABLE INITIALLY IMMEDIATE)');
+        $this->addSql('INSERT INTO run_step (id, run_id, start, command, status) SELECT id, run_id, start, command, status FROM __temp__run_step');
+        $this->addSql('DROP TABLE __temp__run_step');
+        $this->addSql('CREATE INDEX IDX_DF47A11884E3FEC4 ON run_step (run_id)');
         $this->addSql('DROP INDEX IDX_43B9FE3C59D8A214');
         $this->addSql('DROP INDEX IDX_43B9FE3C3EB8070A');
         $this->addSql('CREATE TEMPORARY TABLE __temp__step AS SELECT id, program_id, recipe_id, type, rank, value FROM step');
@@ -118,8 +135,6 @@ final class Version20200727105311 extends AbstractMigration
     public function down(Schema $schema) : void
     {
         // this down() migration is auto-generated, please modify it to your needs
-        $this->addSql('CREATE TABLE migration_versions (version VARCHAR(14) NOT NULL COLLATE BINARY, executed_at DATETIME NOT NULL --(DC2Type:datetime_immutable)
-        , PRIMARY KEY(version))');
         $this->addSql('DROP INDEX IDX_A2F98E47DC90A29E');
         $this->addSql('DROP INDEX IDX_A2F98E47B262EAC9');
         $this->addSql('CREATE TEMPORARY TABLE __temp__channel AS SELECT id, luminaire_id, led_id, channel, i_peek FROM channel');
@@ -190,19 +205,37 @@ final class Version20200727105311 extends AbstractMigration
         $this->addSql('DROP TABLE __temp__pcb');
         $this->addSql('CREATE INDEX IDX_46DC8952DC90A29E ON pcb (luminaire_id)');
         $this->addSql('DROP INDEX IDX_92ED7784A76ED395');
-        $this->addSql('CREATE TEMPORARY TABLE __temp__program AS SELECT id, user_id, label, description FROM program');
+        $this->addSql('CREATE TEMPORARY TABLE __temp__program AS SELECT id, user_id, label, description, uuid FROM program');
         $this->addSql('DROP TABLE program');
-        $this->addSql('CREATE TABLE program (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, user_id INTEGER DEFAULT NULL, label VARCHAR(255) NOT NULL, description CLOB DEFAULT NULL)');
-        $this->addSql('INSERT INTO program (id, user_id, label, description) SELECT id, user_id, label, description FROM __temp__program');
+        $this->addSql('CREATE TABLE program (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, user_id INTEGER DEFAULT NULL, label VARCHAR(255) NOT NULL, description CLOB DEFAULT NULL, uuid VARCHAR(255) DEFAULT NULL)');
+        $this->addSql('INSERT INTO program (id, user_id, label, description, uuid) SELECT id, user_id, label, description, uuid FROM __temp__program');
         $this->addSql('DROP TABLE __temp__program');
         $this->addSql('CREATE INDEX IDX_92ED7784A76ED395 ON program (user_id)');
         $this->addSql('DROP INDEX IDX_DA88B137A76ED395');
-        $this->addSql('CREATE TEMPORARY TABLE __temp__recipe AS SELECT id, user_id, label, description FROM recipe');
+        $this->addSql('CREATE TEMPORARY TABLE __temp__recipe AS SELECT id, user_id, label, description, uuid FROM recipe');
         $this->addSql('DROP TABLE recipe');
-        $this->addSql('CREATE TABLE recipe (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, user_id INTEGER DEFAULT NULL, label VARCHAR(255) NOT NULL, description CLOB DEFAULT NULL)');
-        $this->addSql('INSERT INTO recipe (id, user_id, label, description) SELECT id, user_id, label, description FROM __temp__recipe');
+        $this->addSql('CREATE TABLE recipe (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, user_id INTEGER DEFAULT NULL, label VARCHAR(255) NOT NULL, description CLOB DEFAULT NULL, uuid VARCHAR(255) DEFAULT NULL)');
+        $this->addSql('INSERT INTO recipe (id, user_id, label, description, uuid) SELECT id, user_id, label, description, uuid FROM __temp__recipe');
         $this->addSql('DROP TABLE __temp__recipe');
         $this->addSql('CREATE INDEX IDX_DA88B137A76ED395 ON recipe (user_id)');
+        $this->addSql('DROP INDEX IDX_5076A4C0C36A3328');
+        $this->addSql('DROP INDEX IDX_5076A4C03EB8070A');
+        $this->addSql('DROP INDEX IDX_5076A4C0A76ED395');
+        $this->addSql('CREATE TEMPORARY TABLE __temp__run AS SELECT id, cluster_id, program_id, user_id, start, label, description, date_end, status, uuid FROM run');
+        $this->addSql('DROP TABLE run');
+        $this->addSql('CREATE TABLE run (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, cluster_id INTEGER DEFAULT NULL, program_id INTEGER DEFAULT NULL, user_id INTEGER DEFAULT NULL, start DATETIME DEFAULT NULL, label VARCHAR(255) DEFAULT NULL, description CLOB DEFAULT NULL, date_end DATETIME DEFAULT NULL, status VARCHAR(255) DEFAULT NULL, uuid VARCHAR(255) DEFAULT NULL)');
+        $this->addSql('INSERT INTO run (id, cluster_id, program_id, user_id, start, label, description, date_end, status, uuid) SELECT id, cluster_id, program_id, user_id, start, label, description, date_end, status, uuid FROM __temp__run');
+        $this->addSql('DROP TABLE __temp__run');
+        $this->addSql('CREATE INDEX IDX_5076A4C0C36A3328 ON run (cluster_id)');
+        $this->addSql('CREATE INDEX IDX_5076A4C03EB8070A ON run (program_id)');
+        $this->addSql('CREATE INDEX IDX_5076A4C0A76ED395 ON run (user_id)');
+        $this->addSql('DROP INDEX IDX_DF47A11884E3FEC4');
+        $this->addSql('CREATE TEMPORARY TABLE __temp__run_step AS SELECT id, run_id, start, command, status FROM run_step');
+        $this->addSql('DROP TABLE run_step');
+        $this->addSql('CREATE TABLE run_step (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, run_id INTEGER DEFAULT NULL, start DATETIME NOT NULL, command VARCHAR(255) NOT NULL, status INTEGER NOT NULL)');
+        $this->addSql('INSERT INTO run_step (id, run_id, start, command, status) SELECT id, run_id, start, command, status FROM __temp__run_step');
+        $this->addSql('DROP TABLE __temp__run_step');
+        $this->addSql('CREATE INDEX IDX_DF47A11884E3FEC4 ON run_step (run_id)');
         $this->addSql('DROP INDEX IDX_43B9FE3C3EB8070A');
         $this->addSql('DROP INDEX IDX_43B9FE3C59D8A214');
         $this->addSql('CREATE TEMPORARY TABLE __temp__step AS SELECT id, program_id, recipe_id, type, rank, value FROM step');

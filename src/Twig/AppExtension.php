@@ -4,9 +4,16 @@ namespace App\Twig;
 
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
+use Symfony\Component\Routing\RouterInterface;
+
 
 class AppExtension extends AbstractExtension
 {
+    public function __construct(RouterInterface $router) 
+    {
+        $this->router = $router;
+    }
+
     public function getFunctions()
     {
         return [
@@ -22,9 +29,10 @@ class AppExtension extends AbstractExtension
     function routeExists($name)
     {
         // I assume that you have a link to the container in your twig extension class
-        //$router = $this->container->get('router');
+        // $router = $this->container->get('router');
         //return (null === $router->getRouteCollection()->get($name)) ? false : true;
 
-        return null !== $router->getRouteCollection()->get($name);
+        // return null !== $env->getExtension('routing')->getPath($name);
+        return null !== $this->router->getRouteCollection()->get($name);
     }
 }

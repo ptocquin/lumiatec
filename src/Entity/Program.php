@@ -48,9 +48,15 @@ class Program
      */
     private $uuid;
 
+    /**
+     * @ORM\OneToMany(targetEntity=Run::class, mappedBy="program")
+     */
+    private $runs;
+
     public function __construct()
     {
         $this->steps = new ArrayCollection();
+        $this->runs = new ArrayCollection();
     }
 
     public function __toString()
@@ -138,6 +144,37 @@ class Program
     public function setUuid(?string $uuid): self
     {
         $this->uuid = $uuid;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Run[]
+     */
+    public function getRuns(): Collection
+    {
+        return $this->runs;
+    }
+
+    public function addRun(Run $run): self
+    {
+        if (!$this->runs->contains($run)) {
+            $this->runs[] = $run;
+            $run->setProgram($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRun(Run $run): self
+    {
+        if ($this->runs->contains($run)) {
+            $this->runs->removeElement($run);
+            // set the owning side to null (unless already changed)
+            if ($run->getProgram() === $this) {
+                $run->setProgram(null);
+            }
+        }
 
         return $this;
     }

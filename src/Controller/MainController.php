@@ -24,6 +24,8 @@ use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use App\Entity\Controller;
 use App\Entity\Luminaire;
 use App\Entity\Recipe;
+use App\Entity\Run;
+
 
 
 use App\Form\ControllerType;
@@ -85,6 +87,8 @@ class MainController extends AbstractController
 			$em = $this->getDoctrine()->getManager();
 
 			$luminaire_repo = $this->getDoctrine()->getRepository(Luminaire::class);
+			$run_repo = $this->getDoctrine()->getRepository(Run::class);
+
 			$x_max = $luminaire_repo->getXMax($controller);
         	$y_max = $luminaire_repo->getYMax($controller);
         	$clusters = $controller->getClusters();
@@ -104,6 +108,7 @@ class MainController extends AbstractController
 	            'x_max' => $x_max['x_max'],
 	            'y_max' => $y_max['y_max'],
 	            'luminaire_repo' => $luminaire_repo,
+	            'run_repo' => $run_repo,
 	            'clusters' => $clusters,
         ]);
 		}
@@ -174,6 +179,25 @@ class MainController extends AbstractController
 			return $this->render('main/programs.html.twig', [
 	            'programs' => $programs,
         ]);
+		}
+
+		/**
+		 * @Route("/runs/view/{controller}", name="view-runs")
+		 */
+		public function viewRuns(Request $request, Controller $controller)
+		{
+			$auth_checker = $this->get('security.authorization_checker');
+        	$token = $this->get('security.token_storage')->getToken();
+        	$user = $token->getUser();
+
+    		$em = $this->getDoctrine()->getManager();
+
+    		$runs = $this->getDoctrine()->getRepository(Run::class)->getAllByController($controller);
+
+			return $this->render('main/runs.html.twig', [
+	            'runs' => $runs,
+	            'controller' => $controller
+        	]);
 		}
 
 	    /**
