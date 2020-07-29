@@ -830,36 +830,87 @@ class SetupController extends AbstractController
         	'label' => $c,
         	'controller' => $ctrl
         ));
+
+        $controller = $this->getDoctrine()->getRepository(Controller::class)->find($ctrl);
         // Compter les clusters existants
-        $cluster_number = count($this->getDoctrine()->getRepository(Cluster::class)->findByController($ctrl));
+        // $cluster_number = count($this->getDoctrine()->getRepository(Cluster::class)->findByController($ctrl));
 
         $cluster_added = 0;
-        if (count($cluster) == 0) {
-            $new_cluster = new Cluster;
-            $new_cluster->setLabel($c);
-            $new_cluster->addLuminaire($luminaire);
-            $em->persist($new_cluster);
-            $cluster_added = 1;
+        if (is_null($cluster)) {
+            $cluster = new Cluster;
+            $cluster->setLabel($c);
+            // $cluster->addLuminaire($luminaire);
+            $cluster->setController($controller);
+            $em->persist($cluster);
+
+            // $em->flush();
+            // $cluster->addLuminaire($luminaire);
+            $luminaire->setCluster($cluster);
+            // $cluster_added = 1;
             // $luminaire->setCluster($new_cluster);
             // $em->persist($luminaire);
+            $cluster_added = 1;
         } else {
+        	// $cluster->addLuminaire($luminaire);
             $luminaire->setCluster($cluster);
             // $em->persist($luminaire);
         }
         
         $em->flush();
 
-        $clusters = $this->getDoctrine()->getRepository(Cluster::class)->findByController($ctrl);
-        foreach($clusters as $item) {
-            if(count($item->getLuminaires()) == 0){
-                $em->remove($item);
-                // die(print_r($item->getId()));
-                $removed = count($item->getLuminaires());
-                $cluster_added = 1;
-            }
+        if($cluster_added == 0) {
+        	$clusters = $this->getDoctrine()->getRepository(Cluster::class)->findByController($controller);
+	        foreach($clusters as $item) {
+	            if(count($item->getLuminaires()) == 0) {
+	                $em->remove($item);
+	                // die(print_r($item->getId()));
+	                // $removed = count($item->getLuminaires());
+	                // $cluster_added = 1;
+	            }
+	        }
+	        $em->flush();
         }
+        
+        $cluster_added = 1;
 
-        $em->flush();
+        $session = new Session;
+
+		$classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader(new AnnotationReader()));
+
+    	$normalizer = new ObjectNormalizer($classMetadataFactory);
+		$serializer = new Serializer([$normalizer]);
+
+		$data = $serializer->normalize($luminaire, null, ['groups' => 'luminaire']);
+    	
+    	$httpClient = HttpClient::create(['headers' => [
+				    'X-AUTH-TOKEN' => $luminaire->getController()->getAuthToken(),
+				]]);    	
+    	$base_url = $luminaire->getController()->getUrl();
+		$response = $httpClient->request('POST', $base_url.'/remote/luminaire/link', 
+			['json' => $data]
+		);
+
+
+		$statusCode = $response->getStatusCode();
+		$content = $response->getContent();
+
+		$em = $this->getDoctrine()->getManager();
+
+		if ($statusCode == 200) {
+
+	        // $luminaire->setController($controller);
+	        // $em->persist($luminaire);
+
+			$session->getFlashBag()->add(
+                'info',
+                'Lighting '.$luminaire->getAddress().' successfully mapped !'.$content
+            );
+		} else {
+			$session->getFlashBag()->add(
+                'info',
+                'Something went wrong ! Status code: '.$statusCode.'/'.$content
+            );
+		}
 
         $response = new JsonResponse(array(
             'c' => $c,
