@@ -49,16 +49,18 @@
                         {% if luminaire.cluster is not null %}
                         <div class="btn-group-vertical btn-block">
                           <div class="btn-group">
-                            <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-plus" disabled>
+                            <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-plus" >
                               <span>+</span>
                               <input type="hidden" name="cluster" value="{{ luminaire.cluster.label }}">
                               <input type="hidden" name="luminaire" value="{{ luminaire.address }}">
+                              <input name="controller" type="hidden" value="{{ controller.id }}"></input>
                             </button>
                             <button class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }}" data-toggle="modal" data-target="#modal-cluster-{{ luminaire.cluster.id }}">{{ luminaire.cluster.label }}</button>
-                            <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-minus" disabled>
+                            <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-minus" >
                               <span>-</span>
                               <input type="hidden" name="cluster" value="{{ luminaire.cluster.label }}">
                               <input type="hidden" name="luminaire" value="{{ luminaire.address }}">
+                              <input name="controller" type="hidden" value="{{ controller.id }}"></input>
                             </button>
                           </div>
                         </div>
@@ -98,7 +100,8 @@
                               </div>
                               <button type="button" class="btn btn-success set-position">
                                   <span>Set</span>
-                                  <input type="hidden" name="{{ luminaire.id }}_set_position" value="{{ luminaire.id }}"></input>
+                                  <input type="hidden" name="set_position" value="{{ luminaire.id }}"></input>
+                                  <input name="controller_id" type="hidden" value="{{ controller.id }}"></input>
                                 </button>
                               <a href="{{ path('unmap-luminaire', {'luminaire': luminaire.id, 'controller': controller.id }) }}" class="btn btn-primary btn-danger">Unmap</a>
                             </div>
@@ -137,16 +140,18 @@
                       {% if luminaire.cluster is not null %}
                       <div class="btn-group-vertical btn-block">
                         <div class="btn-group">
-                          <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-plus" disabled>
+                          <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-plus">
                             <span>+</span>
                             <input type="hidden" name="cluster" value="{{ luminaire.cluster.label }}">
                             <input type="hidden" name="luminaire" value="{{ luminaire.address }}">
+                            <input name="controller" type="hidden" value="{{ controller.id }}"></input>
                           </button>
                           <button class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }}" data-toggle="modal" data-target="#modal-cluster-{{ luminaire.cluster.id }}">{{ luminaire.cluster.label }}</button>
-                          <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-minus" disabled>
+                          <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-minus">
                             <span>-</span>
                             <input type="hidden" name="cluster" value="{{ luminaire.cluster.label }}">
                             <input type="hidden" name="luminaire" value="{{ luminaire.address }}">
+                            <input name="controller" type="hidden" value="{{ controller.id }}"></input>
                           </button>
                         </div>
                       </div>
@@ -217,16 +222,18 @@
                       {% if luminaire.cluster is not null %}
                       <div class="btn-group-vertical btn-block">
                         <div class="btn-group">
-                          <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-plus" disabled>
+                          <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-plus">
                             <span>+</span>
                             <input type="hidden" name="cluster" value="{{ luminaire.cluster.label }}">
                             <input type="hidden" name="luminaire" value="{{ luminaire.address }}">
+                            <input name="controller" type="hidden" value="{{ controller.id }}"></input>
                           </button>
                           <button class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }}" data-toggle="modal" data-target="#modal-cluster-{{ luminaire.cluster.id }}">{{ luminaire.cluster.label }}</button>
-                          <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-minus" disabled>
+                          <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-minus">
                             <span>-</span>
                             <input type="hidden" name="cluster" value="{{ luminaire.cluster.label }}">
                             <input type="hidden" name="luminaire" value="{{ luminaire.address }}">
+                            <input name="controller" type="hidden" value="{{ controller.id }}"></input>
                           </button>
                         </div>
                       </div>
@@ -280,6 +287,50 @@
     </div>
   </div>
 </div><!-- Container -->
+
+{% for cluster in clusters %}
+<div class="modal fade" id="modal-cluster-{{ cluster.id }}">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Cluster {{ cluster.label }}</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+          <span class="sr-only">Close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="btn-group-vertical btn-block">
+          <div class="btn-group">
+            <a class="btn btn-light {% if log is not defined %}disabled{% endif %}" type="button"  href="#"><span data-feather="trending-up"></span></a>
+            <a href="{{ path('new-play', {'cluster': cluster.id }) }}" type="button" class="btn btn-light fa fa-play-circle"></a>
+            <a href="{{ path('shutdown', {'cluster': cluster.id }) }}" type="button" class="btn btn-light fa fa-stop-circle"></a>
+            <a href="{{ path('new-run', {'cluster': cluster.id }) }}" type="button" class="btn btn-light fa fa-history">
+                {% set runs = run_repo.getRunningRunsForCluster(cluster.id) %}
+              {% if runs|length > 0 %}
+                <span data-feather="clock" style="color: green;" data-toggle="tooltip" data-placement="top" title="{{ runs|length }} running program"></span> 
+              {% else %}
+                <span style="color: red;" data-feather="clock" data-toggle="tooltip" data-placement="top" title="No running programs"></span> 
+              {% endif %}
+            </a>
+          </div>
+            {% if runs|length > 0 %}
+            <div class="btn-group-vertical btn-block">
+              {% for run in runs %}
+                <div class="btn-group" role="group" aria-label="Basic example">
+                  <button type="button" class="btn btn-success">Run: {{ run.label }} // {{ run.start|date("Y-m-d H:i:s") }}</button>
+                  <a class="btn btn-light fa fa-trash" type="button"  href="{{ path('delete-run', {'id': run.id }) }}"></span></a>
+                  {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+{% endfor %}
 
 {% endblock %}
 
