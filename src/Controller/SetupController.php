@@ -745,6 +745,8 @@ class SetupController extends AbstractController
 
 		$data = $serializer->normalize($luminaire, null, ['groups' => 'luminaire']);
 
+		// dd($data);
+
 		// $jsonContent = $serializer->serialize($luminaire, 'json');
 
 		// die(print_r($data));
@@ -753,16 +755,17 @@ class SetupController extends AbstractController
 				    'X-AUTH-TOKEN' => $controller->getAuthToken(),
 				]]);    	
     	$base_url = $controller->getUrl();
-		$response = $httpClient->request('POST', $base_url.'/api_old/luminaire', 
+		$response = $httpClient->request('POST', $base_url.'/remote/luminaire/link', 
 			['json' => $data]
 		);
+
 
 		$statusCode = $response->getStatusCode();
 		$content = $response->getContent();
 
 		$em = $this->getDoctrine()->getManager();
 
-		if ($statusCode == 201) {
+		if ($statusCode == 200) {
 
 	        $luminaire->setController($controller);
 	        $em->persist($luminaire);
@@ -901,7 +904,7 @@ class SetupController extends AbstractController
         if(is_null($test_luminaire)) {
             $luminaire->setColonne($x);
             $luminaire->setLigne($y);
-            $em->persist($luminaire);
+            // $em->persist($luminaire);
             $em->flush();
         } else {
             $test_luminaire->setColonne(null);
@@ -915,6 +918,48 @@ class SetupController extends AbstractController
 
         $x_max = $this->getDoctrine()->getRepository(Luminaire::class)->getXMax($ctrl);
         $y_max = $this->getDoctrine()->getRepository(Luminaire::class)->getYMax($ctrl);
+
+        $session = new Session;
+
+		$classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader(new AnnotationReader()));
+
+    	$normalizer = new ObjectNormalizer($classMetadataFactory);
+		$serializer = new Serializer([$normalizer]);
+
+		$data = $serializer->normalize($luminaire, null, ['groups' => 'luminaire']);
+    	
+    	$httpClient = HttpClient::create(['headers' => [
+				    'X-AUTH-TOKEN' => $luminaire->getController()->getAuthToken(),
+				]]);    	
+    	$base_url = $luminaire->getController()->getUrl();
+		$response = $httpClient->request('POST', $base_url.'/remote/luminaire/link', 
+			['json' => $data]
+		);
+
+
+		$statusCode = $response->getStatusCode();
+		$content = $response->getContent();
+
+		$em = $this->getDoctrine()->getManager();
+
+		if ($statusCode == 200) {
+
+	        // $luminaire->setController($controller);
+	        // $em->persist($luminaire);
+
+			$session->getFlashBag()->add(
+                'info',
+                'Lighting '.$luminaire->getAddress().' successfully mapped !'.$content
+            );
+		} else {
+			$session->getFlashBag()->add(
+                'info',
+                'Something went wrong ! Status code: '.$statusCode.'/'.$content
+            );
+		}
+		
+		$em->flush(); 
+
 
         $response = new JsonResponse(array(
             'id' => $id,

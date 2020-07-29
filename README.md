@@ -1,7 +1,8 @@
 ## Changelog
 
-# v0.1.9 (20200728)
+# v0.1.10 (20200728)
 - adding run management
+- update link lighting
 
 # v0.1.7 (20200727)
 - vpn integration + login/logout update + uuid in recipe and program
