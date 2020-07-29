@@ -1,4 +1,4 @@
-{% macro datatable(rows, cols, names, styles = "table-responsive table-inverse", action = false) %}
+{% macro datatable(rows, cols, names, styles = "table-responsive table-inverse", action = false, modal = false) %}
 	{% import _self as self %}
     <table class="table {{ styles }}">
 		<thead>
@@ -6,6 +6,12 @@
 				{% for name in names %}
 				    <th>{{ name }}</th>
 				{% endfor %}
+				{% if action %}
+					<th>Actions</th>
+				{% endif %}
+				{% if modal %}
+					<th>Actions</th>
+				{% endif %}
 			</tr>
 		</thead>
 		<tbody>
@@ -23,9 +29,14 @@
 					    </td>
 					{% endfor %}
 					{% if action and routeExists(action.path) %}
-					<td>
-	                    <a href="{{ path( action.path, {'id': row.id}) }}" class="btn btn-link btn-sm">{{ action.label }}</a>
-	                </td>
+						<td>
+		                    <a href="{{ path( action.path, {'id': row.id}) }}" class="btn btn-link btn-sm">{{ action.label }}</a>
+		                </td>
+	                {% endif %}
+	                {% if modal %}
+	                	<td>
+	                		<button class="btn btn-sm" data-toggle="modal" data-target="#modal-{{ row.id }}">{{ modal.label }}</button>
+	                	</td>
 	                {% endif %}
 				</tr>
 			{% endfor %}
