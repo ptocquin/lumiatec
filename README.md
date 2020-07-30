@@ -1,5 +1,8 @@
 ## Changelog
 
+# v0.1.12 (20200730)
+- sync recipe and program with remote controllers
+
 # v0.1.11 (20200728)
 - adding run management
 - update link lighting
