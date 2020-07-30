@@ -1,0 +1,63 @@
+<div class="col-md-12">
+	{% form_theme form 
+		'bootstrap_4_layout.html.twig' %}
+	{{ form_start(form) }}
+	<div class="row">
+		<div class="col">
+			{% if edit is defined %}
+				{{ form_row(form.label, {'label_attr': { class: 'text-dark'}}) }}
+			{% else %}
+				{{ form_row(form.label, {'value' : "recipe_" ~ "now"|date("Y-m-d_H:i:s"), 'label_attr': { class: 'text-dark'}}) }}
+			{% endif %}
+		</div>
+		<div class="col">
+			{{ form_row(form.color, {'label_attr': { class: 'text-dark'}}) }}
+		</div>
+		<div class="col">
+			{{ form_row(form.frequency, {'label_attr': { class: 'text-dark'}}) }}
+		</div>
+	</div>
+	<div class="row">
+		<div class="col">
+			{{ form_row(form.description, {'attr': { "class": "d-none d-lg-block"},'label_attr': { class: 'text-dark'}}) }}
+		</div>
+	</div>
+	
+	<div class="row">
+		<div class="col">
+			<table class="table table-sm">
+				<thead>
+					<tr class="text-dark">
+						<th scope="col">Led</th>
+						<th scope="col">Intensity</th>
+						<th scope="col">PWM start</th>
+						<th scope="col">PWM stop</th>
+					</tr>
+				</thead>
+		  		<tbody>
+					{% for ingredient in form.ingredients %}
+					<tr>
+						<th scope="row" class="text-dark">{{ ingredient.vars.data.led.type~"_"~ingredient.vars.data.led.wavelength }}</th>
+						{% if edit is defined %}
+				    		<td> {{ form_widget(ingredient.level, { 'label': 'Intensity', 'label_attr': { class: 'text-dark'} }) }}</td>
+				    		<td>{{ form_widget(ingredient.pwm_start, { 'label_attr': { class: 'text-dark'} }) }}</td>
+				    		<td>{{ form_widget(ingredient.pwm_stop, { 'label_attr': { class: 'text-dark'} }) }}</td>
+				    	{% else %}
+				    		<td>{{ form_widget(ingredient.level, { 'label': 'intensity', 'value': 0, 'label_attr': { class: 'text-dark'} }) }}</td>
+				    		<td>{{ form_widget(ingredient.pwm_start, { 'value': 0, 'label_attr': { class: 'text-dark'} }) }}</td>
+				    		<td>{{ form_widget(ingredient.pwm_stop, { 'value': 1, 'label_attr': { class: 'text-dark'} }) }}</td>
+				    	{% endif %}
+				    </tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+	{{ form_widget(form) }}
+	<button class="btn btn-light">{{ button_label|default('Save')|trans }}</button>
+	<a class="btn btn-light" href="{{ path('view-recipes') }}">{% trans %}Cancel{% endtrans %}</a>
+	{# <a href="#" id="test_recipe" class="btn btn-info">Test</a> #}
+	{{ form_end(form) }}
+
+</div>

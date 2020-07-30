@@ -6,6 +6,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
+
 
 
 /**
@@ -36,6 +38,26 @@ class Ingredient
      * @ORM\ManyToOne(targetEntity="App\Entity\Recipe", inversedBy="ingredients")
      */
     private $recipe;
+
+    /**
+     * @ORM\Column(type="float", nullable=true)
+     * @Groups({"recipe","program"})
+     * @Assert\Range(
+     *      min = 0,
+     *      max = 1
+     * )
+     */
+    private $pwm_start;
+
+    /**
+     * @ORM\Column(type="float", nullable=true)
+     * @Groups({"recipe","program"})
+     * @Assert\Range(
+     *      min = 0,
+     *      max = 1
+     * )
+     */
+    private $pwm_stop;
 
 
     public function __construct()
@@ -80,6 +102,30 @@ class Ingredient
     public function setRecipe(?Recipe $recipe): self
     {
         $this->recipe = $recipe;
+
+        return $this;
+    }
+
+    public function getPwmStart(): ?float
+    {
+        return $this->pwm_start;
+    }
+
+    public function setPwmStart(?float $pwm_start): self
+    {
+        $this->pwm_start = $pwm_start;
+
+        return $this;
+    }
+
+    public function getPwmStop(): ?float
+    {
+        return $this->pwm_stop;
+    }
+
+    public function setPwmStop(?float $pwm_stop): self
+    {
+        $this->pwm_stop = $pwm_stop;
 
         return $this;
     }

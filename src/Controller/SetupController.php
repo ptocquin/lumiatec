@@ -323,6 +323,7 @@ class SetupController extends AbstractController
 		            $recipe->setLabel($r['label']);
 		            $recipe->setDescription($r['description']);
 		            $recipe->setUser($user);
+		            $recipe->setTimestamp($r['timestamp']);
 		            foreach ($r['ingredients'] as $i) {
 
 		                $led = $this->getDoctrine()->getRepository(Led::class)->findOneBy(
@@ -344,10 +345,91 @@ class SetupController extends AbstractController
 		                $ingredient = new Ingredient;
 		                $ingredient->setLed($led);
 		                $ingredient->setLevel($i['level']);
+		                $ingredient->setPwmStart($i['pwm_start']);
+			            $ingredient->setPwmStop($i['pwm_stop']);
 		                $em->persist($ingredient);
 		                $recipe->addIngredient($ingredient);
 		            }
 		            $em->persist($recipe);
+				} else {
+					if($recipe->getTimestamp() < $r['timestamp']) {
+						$recipe->setLabel($r['label']);
+			            $recipe->setDescription($r['description']);
+			            $recipe->setTimestamp($r['timestamp']);
+			            foreach ($recipe->getIngredients() as $ingredient) {
+			            	$em->remove($ingredient);
+			            }
+
+			            foreach ($r['ingredients'] as $i) {
+			                $led = $this->getDoctrine()->getRepository(Led::class)->findOneBy(
+			                    array(
+			                        "wavelength" => $i['led']['wavelength'],
+			                        "type" => $i['led']['type'],
+			                        "manufacturer" => $i['led']['manufacturer']
+			                    )
+			                );
+
+			                if(is_null($led)) {
+			                    $led = new Led;
+			                    $led->setWavelength($i['led']['wavelength']);
+			                    $led->setType($i['led']['type']);
+			                    $led->setManufacturer($i['led']['manufacturer']);
+			                    $em->persist($led);
+			                }
+			                $ingredient = new Ingredient;
+			                $ingredient->setLed($led);
+			                $ingredient->setLevel($i['level']);
+			                $ingredient->setPwmStart($i['pwm_start']);
+			                $ingredient->setPwmStop($i['pwm_stop']);
+			                $em->persist($ingredient);
+			                $recipe->addIngredient($ingredient);
+			            }
+			            $em->persist($recipe);
+					}
+					if($recipe->getTimestamp() > $r['timestamp']) {
+						$classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader(new AnnotationReader()));
+				    	$normalizer = new ObjectNormalizer($classMetadataFactory);
+						$serializer = new Serializer([$normalizer]);
+
+						$data = $serializer->normalize($recipe, null, ['groups' => 'recipe']);
+						$data = array("recipe" => $data);
+
+						// dd($data);
+				    	
+				    	$httpClient = HttpClient::create(['headers' => [
+							    'X-AUTH-TOKEN' => $controller->getAuthToken(),
+							]]);
+			    		$base_url = $controller->getUrl();
+
+			    		try {
+							$response = $httpClient->request('POST', $base_url.'/remote/update/recipe', 
+								['json' => $data]
+							);
+							$statusCode = $response->getStatusCode();
+							$content = $response->getContent();
+						} catch (\Exception $e) {
+							$session->getFlashBag()->add(
+						        'info',
+						        'The controller ('.$controller->getName().') was not reachable... '
+						    );
+						    continue;
+
+
+						}
+
+						if ($statusCode == 200) {
+							$session->getFlashBag()->add(
+						        'info',
+						        'ok !'
+						    );
+							
+						} else {
+							$session->getFlashBag()->add(
+						        'info',
+						        'error !'
+						    );	
+						}
+					}
 				}
 			}
 
@@ -387,6 +469,7 @@ class SetupController extends AbstractController
 					$program->setUser($user);
 					$program->setLabel($p['label']);
 					$program->setDescription($p['description']);
+					$program->setTimestamp($p['timestamp']);
 					foreach ($p['steps'] as $s) {
 						$step = new Step;
 						$step->setType($s['type']);
@@ -400,6 +483,75 @@ class SetupController extends AbstractController
 						$program->addStep($step);
 					}
 					$em->persist($program);
+				} else {
+					if($program->getTimestamp() < $p['timestamp']) {
+						$program->setUuid($p['uuid']);
+						$program->setUser($user);
+						$program->setLabel($p['label']);
+						$program->setDescription($p['description']);
+						$program->setTimestamp($p['timestamp']);
+						foreach ($program->getSteps() as $step) {
+							$em->remove($step);
+						}
+						foreach ($p['steps'] as $s) {
+							$step = new Step;
+							$step->setType($s['type']);
+							$step->setRank($s['rank']);
+							$step->setValue($s['value']);
+							if(!is_null($s['recipe'])){
+								$recipe = $this->getDoctrine()->getRepository(Recipe::class)->findOneBy(array('uuid' => $s['recipe']['uuid'], 'user' => $user->getId()));
+								$step->setRecipe($recipe);
+							}
+							$em->persist($step);
+							$program->addStep($step);
+						}
+					}
+					if($program->getTimestamp() > $p['timestamp']) {
+						$classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader(new AnnotationReader()));
+				    	$normalizer = new ObjectNormalizer($classMetadataFactory);
+						$serializer = new Serializer([$normalizer]);
+
+						$data = $serializer->normalize($program, null, ['groups' => 'program']);
+						$data = array("program" => $data);
+
+						// dd($data);
+				    	
+				    	$httpClient = HttpClient::create(['headers' => [
+							    'X-AUTH-TOKEN' => $controller->getAuthToken(),
+							]]);
+			    		$base_url = $controller->getUrl();
+
+			    		try {
+							$response = $httpClient->request('POST', $base_url.'/remote/update/program', 
+								['json' => $data]
+							);
+							$statusCode = $response->getStatusCode();
+							$content = $response->getContent();
+						} catch (\Exception $e) {
+							$session->getFlashBag()->add(
+						        'info',
+						        'The controller ('.$controller->getName().') was not reachable... '
+						    );
+
+						    dd($e);
+						    continue;
+
+
+						}
+
+						if ($statusCode == 200) {
+							$session->getFlashBag()->add(
+						        'info',
+						        'ok !'
+						    );
+							
+						} else {
+							$session->getFlashBag()->add(
+						        'info',
+						        'error !'
+						    );	
+						}
+					}
 				}
 			}
 
@@ -1034,6 +1186,7 @@ class SetupController extends AbstractController
         $leds = $this->getDoctrine()->getRepository(Led::class)->findAll();
 
         $recipe = new Recipe;
+        $recipe->setTimestamp(time());
         $recipe->setUser($user);
         $uuid = uuid_create(UUID_TYPE_RANDOM);
         $recipe->setUuid($uuid);
@@ -1057,7 +1210,34 @@ class SetupController extends AbstractController
         
         return $this->render('setup/new-recipe.html.twig', [
             'form' => $form->createView(),
+            'edit' => false,
             'navtitle' => 'New Recipe',
+        ]);
+    }
+
+    /**
+     * @Route("/recipes/edit/{id}", name="edit-recipe")
+     */
+    public function editRecipe(Request $request, Recipe $recipe)
+    {
+        $em = $this->getDoctrine()->getManager();
+
+        $recipe->setTimestamp(time());
+        $form = $this->createForm(RecipeType::class, $recipe);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $em = $this->getDoctrine()->getManager();
+            // $em->persist($recipe);
+            $em->flush();
+
+            return $this->redirectToRoute('view-recipes');
+        }
+        
+        return $this->render('setup/new-recipe.html.twig', [
+            'form' => $form->createView(),
+            'edit' => true,
+            'navtitle' => 'Edit Recipe',
         ]);
     }
 
@@ -1187,6 +1367,7 @@ class SetupController extends AbstractController
         $uuid = uuid_create(UUID_TYPE_RANDOM);
         $program->setUuid($uuid);
         $program->setUser($user);
+        $program->setTimestamp(time());
         $form = $this->createForm(ProgramType::class, $program);
 
         $form->handleRequest($request);
@@ -1204,7 +1385,34 @@ class SetupController extends AbstractController
         }
         return $this->render('setup/new-program.html.twig', [
             'form' => $form->createView(),
+            'edit' => false,
             'navtitle' => 'New Program',
+        ]);
+    }
+
+    /**
+     * @Route("/programs/edit/{id}", name="edit-program")
+     */
+    public function editProgram(Request $request, Program $program)
+    {
+        $em = $this->getDoctrine()->getManager();
+
+        $program->setTimestamp(time());
+        $form = $this->createForm(ProgramType::class, $program);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $em = $this->getDoctrine()->getManager();
+            // $em->persist($recipe);
+            $em->flush();
+
+            return $this->redirectToRoute('view-programs');
+        }
+        
+        return $this->render('setup/new-program.html.twig', [
+            'form' => $form->createView(),
+            'edit' => true,
+            'navtitle' => 'Edit Program',
         ]);
     }
 
