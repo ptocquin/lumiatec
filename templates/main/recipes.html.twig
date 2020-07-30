@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% import 'macros.twig' as macros %}
 
 {% block title %}Hello MainController!{% endblock %}
 
@@ -6,43 +7,38 @@
 
 {% block panelContent %}
 <div class="row">
+    {{ macros.datatable(
+        recipes,
+        ['label'],
+        ['Label'],
+        'table-sm', false, {'label':'Edit'})
+    }}
+
     {% for recipe in recipes %}
-    <div class="col-sm-6 col-md-4 col-lg-3 mb-2">
-        <div class="card text-center ">
-            <div class="card-body">
-                <h4 class="card-title">
-                    {{ recipe.label }}
-                </h4>
-                <p class="card-text">
-                    {{ recipe.description }}
-                </p>
-                <button class="btn btn-sm btn-outline-secondary fa fa-info-circle" data-toggle="modal" data-target="#recipe-detail-{{ recipe.id }}"></button>
-                <div class="modal fade" id="recipe-detail-{{ recipe.id }}">
-                    <div class="modal-dialog modal-dialog-centered" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h4 class="modal-title">{{ recipe.label }}</h4>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            <div class="modal-body">
-                                <p class="text-muted my-1 border-bottom">{{ recipe.description }}</p>
-                                <ul class="list-group list-group-flush">
-                                    {% for ingredient in recipe.ingredients %}
-                                        <li class="list-group-item d-flex justify-content-between align-items-center">{{ ingredient.led.type }} {{ ingredient.led.wavelength }} <span class="badge badge-light">{{ ingredient.level }}%</span></li>
-                                    {% endfor %}
-                                 </ul>
-                            </div>
-                            <div class="modal-footer">
-                                <a class="btn btn-sm btn-outline-secondary fa fa-edit" href="#"></a>
-                            </div>
-                        </div><!-- /.modal-content -->
-                    </div><!-- /.modal-dialog -->
-                </div><!-- /.modal -->
-            </div>
-        </div>
-    </div>
+    <div class="modal fade" id="modal-{{ recipe.id }}">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Edit recipe {{ recipe.label }}</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                        <span class="sr-only">Close</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted my-1 border-bottom">{{ recipe.description|default('No description provided') }}</p>
+                    <ul class="list-group list-group-flush">
+                        {% for ingredient in recipe.ingredients %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">{{ ingredient.led.type }} {{ ingredient.led.wavelength }} <span class="badge badge-light">{{ ingredient.level }}%</span></li>
+                        {% endfor %}
+                     </ul>
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-sm btn-outline-secondary fa fa-edit" href="{{ path('edit-recipe', {'id': recipe.id })}}"></a>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
     {% endfor %}
 </div>
 {% endblock %}

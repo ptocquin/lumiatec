@@ -54,6 +54,23 @@ class Recipe
      */
     private $uuid;
 
+    /**
+     * @ORM\Column(type="integer", nullable=true)
+     * @Groups({"recipe","program"})
+     */
+    private $timestamp;
+
+    /**
+     * @ORM\Column(type="float", nullable=true)
+     * @Groups({"recipe","program"})
+     */
+    private $frequency;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $color;
+
     public function __toString(){
         return $this->label;
     }
@@ -175,6 +192,42 @@ class Recipe
     public function setUuid(?string $uuid): self
     {
         $this->uuid = $uuid;
+
+        return $this;
+    }
+
+    public function getTimestamp(): ?int
+    {
+        return $this->timestamp;
+    }
+
+    public function setTimestamp(?int $timestamp): self
+    {
+        $this->timestamp = $timestamp;
+
+        return $this;
+    }
+
+    public function getFrequency(): ?float
+    {
+        return $this->frequency;
+    }
+
+    public function setFrequency(?float $frequency): self
+    {
+        $this->frequency = $frequency;
+
+        return $this;
+    }
+
+    public function getColor(): ?string
+    {
+        return $this->color;
+    }
+
+    public function setColor(?string $color): self
+    {
+        $this->color = $color;
 
         return $this;
     }

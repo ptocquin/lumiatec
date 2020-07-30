@@ -8,6 +8,7 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
+use Symfony\Component\Form\Extension\Core\Type\ColorType;
 
 
 class RecipeType extends AbstractType
@@ -17,6 +18,12 @@ class RecipeType extends AbstractType
         $builder
             ->add('label')
             ->add('description')
+             ->add('color', ColorType::class, array(
+                'label' => 'recipes.form.new.color'
+            ))
+            ->add('frequency', null, array(
+                'label' => 'recipes.form.new.frequency'
+            ))
             ->add('ingredients', CollectionType::class, array(
                 'entry_type' => IngredientType::class,
                 'entry_options' => array('label' => false),

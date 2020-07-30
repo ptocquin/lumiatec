@@ -53,6 +53,12 @@ class Program
      */
     private $runs;
 
+    /**
+     * @ORM\Column(type="integer", nullable=true)
+     * @Groups({"program"})
+     */
+    private $timestamp;
+
     public function __construct()
     {
         $this->steps = new ArrayCollection();
@@ -175,6 +181,18 @@ class Program
                 $run->setProgram(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getTimestamp(): ?int
+    {
+        return $this->timestamp;
+    }
+
+    public function setTimestamp(?int $timestamp): self
+    {
+        $this->timestamp = $timestamp;
 
         return $this;
     }

@@ -69,6 +69,11 @@ class Run
      */
     private $user;
 
+    /**
+     * @ORM\Column(type="integer", nullable=true)
+     */
+    private $timestamp;
+
     public function __construct()
     {
         $this->runSteps = new ArrayCollection();
@@ -214,6 +219,18 @@ class Run
     public function setUser(?User $user): self
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    public function getTimestamp(): ?int
+    {
+        return $this->timestamp;
+    }
+
+    public function setTimestamp(?int $timestamp): self
+    {
+        $this->timestamp = $timestamp;
 
         return $this;
     }
