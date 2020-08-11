@@ -43,6 +43,8 @@ use App\Form\ControllerType;
 use App\Form\RecipeType;
 use App\Form\ProgramType;
 use App\Form\StepType;
+use App\Form\LuminaireType;
+
 
 /**
  * @Route("/setup")
@@ -952,11 +954,40 @@ class SetupController extends AbstractController
      */
     public function unlinkController(Luminaire $luminaire, Controller $controller)
     {
-    	$em = $this->getDoctrine()->getManager();
+    	$session = new Session;
+		$classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader(new AnnotationReader()));
+    	$normalizer = new ObjectNormalizer($classMetadataFactory);
+		$serializer = new Serializer([$normalizer]);
+		$data = $serializer->normalize($luminaire, null, ['groups' => 'luminaire']);
+    	
+    	$httpClient = HttpClient::create(['headers' => [
+				    'X-AUTH-TOKEN' => $controller->getAuthToken(),
+				]]);    	
+    	$base_url = $controller->getUrl();
+		$response = $httpClient->request('POST', $base_url.'/remote/luminaire/unlink', 
+			['json' => $data]
+		);
 
-        $luminaire->setController(null);
-        $em->persist($luminaire);
-        $em->flush();
+		$statusCode = $response->getStatusCode();
+		$content = $response->getContent();
+
+		if ($statusCode == 200) {
+
+			$em = $this->getDoctrine()->getManager();
+	        $luminaire->setController(null);
+	        $em->flush();
+
+			$session->getFlashBag()->add(
+                'info',
+                'Lighting '.$luminaire->getAddress().' successfully unlinked !'.$content
+            );
+
+		} else {
+			$session->getFlashBag()->add(
+                'info',
+                'Something went wrong ! Status code: '.$statusCode.'/'.$content
+            );
+		}
 
         return $this->redirectToRoute('view-lightings');
     }
@@ -1173,6 +1204,93 @@ class SetupController extends AbstractController
     }
 
     /**
+     * @Route("/lightings/new", name="new-lighting")
+     */
+    public function newLighting(Request $request)
+    {
+    	$auth_checker = $this->get('security.authorization_checker');
+        $token = $this->get('security.token_storage')->getToken();
+        $user = $token->getUser();
+
+        $em = $this->getDoctrine()->getManager();
+
+        $lighting = new Luminaire;
+        $lighting->addUser($user);
+
+        $form = $this->createForm(LuminaireType::class, $lighting);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $em = $this->getDoctrine()->getManager();
+            $em->persist($lighting);
+            $em->flush();
+
+            return $this->redirectToRoute('view-lightings');
+        }
+        
+        return $this->render('setup/new-lighting.html.twig', [
+            'form' => $form->createView(),
+            'edit' => false,
+            'navtitle' => 'New Lighting',
+        ]);
+    }
+
+    /**
+     * @Route("/lightings/delete/{id}", name="delete-lighting")
+     */
+    public function deleteLighting(Request $request, Luminaire $lighting)
+    {
+    	$auth_checker = $this->get('security.authorization_checker');
+        $token = $this->get('security.token_storage')->getToken();
+        $user = $token->getUser();
+
+        $controller = $lighting->getController();
+
+        if(!is_null($controller)){
+        	$session = new Session;
+			$classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader(new AnnotationReader()));
+	    	$normalizer = new ObjectNormalizer($classMetadataFactory);
+			$serializer = new Serializer([$normalizer]);
+			$data = $serializer->normalize($lighting, null, ['groups' => 'luminaire']);
+	    	
+	    	$httpClient = HttpClient::create(['headers' => [
+					    'X-AUTH-TOKEN' => $controller->getAuthToken(),
+					]]);    	
+	    	$base_url = $controller->getUrl();
+			$response = $httpClient->request('POST', $base_url.'/remote/luminaire/unlink', 
+				['json' => $data]
+			);
+
+			$statusCode = $response->getStatusCode();
+			$content = $response->getContent();
+
+			if ($statusCode == 200) {
+
+				$session->getFlashBag()->add(
+	                'info',
+	                'Lighting '.$lighting->getAddress().' successfully removed !'.$content
+	            );
+
+	            $em = $this->getDoctrine()->getManager();
+		        $em->remove($lighting);
+		        $em->flush();
+
+			} else {
+				$session->getFlashBag()->add(
+	                'info',
+	                'Something went wrong ! Status code: '.$statusCode.'/'.$content
+	            );
+			}
+        } else {
+        	$em = $this->getDoctrine()->getManager();
+		    $em->remove($lighting);
+		    $em->flush();
+        }
+
+        return $this->redirectToRoute('view-lightings');
+    }
+
+    /**
      * @Route("/recipes/new", name="new-recipe")
      */
     public function newRecipe(Request $request)
@@ -1239,6 +1357,22 @@ class SetupController extends AbstractController
             'edit' => true,
             'navtitle' => 'Edit Recipe',
         ]);
+    }
+
+    /**
+     * @Route("/recipes/delete/{id}", name="delete-recipe")
+     */
+    public function deleteRecipe(Request $request, Recipe $recipe)
+    {
+    	$auth_checker = $this->get('security.authorization_checker');
+        $token = $this->get('security.token_storage')->getToken();
+        $user = $token->getUser();
+
+    	$em = $this->getDoctrine()->getManager();
+	    $em->remove($recipe);
+	    $em->flush();
+        
+        return $this->redirectToRoute('view-recipes');
     }
 
     /**
@@ -1414,6 +1548,22 @@ class SetupController extends AbstractController
             'edit' => true,
             'navtitle' => 'Edit Program',
         ]);
+    }
+
+    /**
+     * @Route("/programs/delete/{id}", name="delete-program")
+     */
+    public function deleteProgram(Request $request, Program $program)
+    {
+    	$auth_checker = $this->get('security.authorization_checker');
+        $token = $this->get('security.token_storage')->getToken();
+        $user = $token->getUser();
+
+    	$em = $this->getDoctrine()->getManager();
+	    $em->remove($program);
+	    $em->flush();
+        
+        return $this->redirectToRoute('view-programs');
     }
 
     /**

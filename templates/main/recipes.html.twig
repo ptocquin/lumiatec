@@ -11,11 +11,11 @@
         recipes,
         ['label'],
         ['Label'],
-        'table-sm', false, {'label':'Edit'})
+        'table-sm', false, [{'id': 'edit', 'label':'Edit'}, {'id':'delete', 'label': 'Delete'}])
     }}
 
     {% for recipe in recipes %}
-    <div class="modal fade" id="modal-{{ recipe.id }}">
+    <div class="modal fade" id="modal-edit-{{ recipe.id }}">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -35,6 +35,16 @@
                 </div>
                 <div class="modal-footer">
                     <a class="btn btn-sm btn-outline-secondary fa fa-edit" href="{{ path('edit-recipe', {'id': recipe.id })}}"></a>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+    <div class="modal fade" id="modal-delete-{{ recipe.id }}">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <a class="btn btn-block btn-danger" href="{{ path('delete-recipe', {'id': recipe.id }) }}">Confirm delete</a>
+                    <button type="button" class="btn btn-block btn-primary" data-dismiss="modal">Cancel</a>
                 </div>
             </div><!-- /.modal-content -->
         </div><!-- /.modal-dialog -->

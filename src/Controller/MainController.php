@@ -126,6 +126,23 @@ class MainController extends AbstractController
 		}
 
 		/**
+		 * @Route("/controller/delete/{id}", name="delete-controller")
+		 */
+		public function deleteController(Request $request, Controller $controller)
+		{
+			$em = $this->getDoctrine()->getManager();
+
+			$lightings = $controller->getLuminaires();
+			foreach ($lightings as $lighting) {
+					$controller->removeLuminaire($lighting);
+				}
+			$em->remove($controller);
+			$em->flush();
+
+			return $this->redirectToRoute('home');
+		}
+
+		/**
 		 * @Route("/lightings/view", name="view-lightings")
 		 */
 		public function viewLightings(Request $request)

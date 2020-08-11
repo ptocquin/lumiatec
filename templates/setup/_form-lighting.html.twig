@@ -1,0 +1,17 @@
+<div class="col-md-12">
+	{% form_theme form 
+		'bootstrap_4_layout.html.twig' %}
+	{{ form_start(form) }}
+	<div class="row">
+		<div class="col">
+			{{ form_row(form.address, {'label_attr': { class: 'text-dark'}}) }}
+		</div>
+	</div>
+
+	{{ form_widget(form) }}
+	<button class="btn btn-light">{{ button_label|default('Save')|trans }}</button>
+	<a class="btn btn-light" href="{{ path('view-lightings') }}">{% trans %}Cancel{% endtrans %}</a>
+	{# <a href="#" id="test_recipe" class="btn btn-info">Test</a> #}
+	{{ form_end(form) }}
+
+</div>
