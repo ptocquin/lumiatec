@@ -13,11 +13,11 @@
         programs,
         ['label'],
         ['Label'],
-        'table-sm', false, {'label':'Edit'})
+        'table-sm', false, [{'id': 'edit', 'label':'Edit'},{'id': 'delete', 'label':'Delete'}])
     }}
 
 {% for program in programs %}
-    <div class="modal fade" id="modal-{{ program.id }}">
+    <div class="modal fade" id="modal-edit-{{ program.id }}">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -40,6 +40,17 @@
             </div><!-- /.modal-content -->
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
+    <div class="modal fade" id="modal-delete-{{ program.id }}">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <a class="btn btn-block btn-danger" href="{{ path('delete-program', {'id': program.id }) }}">Confirm delete</a>
+                    <button type="button" class="btn btn-block btn-primary" data-dismiss="modal">Cancel</a>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
 {% endfor %}
 
 </div>

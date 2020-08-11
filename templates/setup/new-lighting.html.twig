@@ -1,0 +1,14 @@
+{% extends 'base.html.twig' %}
+{% set colors = ["primary","secondary","success","danger","warning","info"] %}
+
+{% block title %}New lighting{% endblock %}
+
+{% block navtitle %}New lighting{% endblock %}
+
+{% block panelContent %}
+<div class="row">	
+
+		{% include 'setup/_form-lighting.html.twig' %}
+
+</div>
+{% endblock %}
