@@ -1,6 +1,9 @@
 ## Changelog
-# v0.1.13 (20200811)
+
+
+# v0.1.13/14 (20200811)
 - add & remove lightings, recipes and programs
+- hotfix
 
 # v0.1.12 (20200730)
 - sync recipe and program with remote controllers
