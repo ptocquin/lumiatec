@@ -35,15 +35,37 @@ class LogRepository extends ServiceEntityRepository
     }
     */
 
-    /*
-    public function findOneBySomeField($value): ?Log
+    
+    public function findOneByControllerLightingTime($controller, $lighting, $time): ?Log
     {
         return $this->createQueryBuilder('l')
-            ->andWhere('l.exampleField = :val')
-            ->setParameter('val', $value)
+            ->andWhere('l.controller = :controller')
+            ->andWhere('l.luminaire = :lighting')
+            ->andWhere('l.time = :time')
+            ->setParameter('controller', $controller)
+            ->setParameter('lighting', $lighting)
+            ->setParameter('time', $time)
             ->getQuery()
             ->getOneOrNullResult()
         ;
     }
+
+   /**
+    * @return Log[] Returns an array of Log objects
     */
+    
+    public function getLuminaireLastLog($luminaire)
+    {
+        return $this->createQueryBuilder('l')
+            ->where('l.luminaire = :luminaire')
+            ->andWhere('l.type = :type')
+            ->setParameter('luminaire', $luminaire)
+            ->setParameter('type', 'luminaire_info')
+            ->orderBy('l.time', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+    
 }
