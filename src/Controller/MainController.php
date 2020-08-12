@@ -25,6 +25,7 @@ use App\Entity\Controller;
 use App\Entity\Luminaire;
 use App\Entity\Recipe;
 use App\Entity\Run;
+use App\Entity\Log;
 
 
 
@@ -88,6 +89,7 @@ class MainController extends AbstractController
 
 			$luminaire_repo = $this->getDoctrine()->getRepository(Luminaire::class);
 			$run_repo = $this->getDoctrine()->getRepository(Run::class);
+			$log_repo = $this->getDoctrine()->getRepository(Log::class);
 
 			$x_max = $luminaire_repo->getXMax($controller);
         	$y_max = $luminaire_repo->getYMax($controller);
@@ -109,6 +111,7 @@ class MainController extends AbstractController
 	            'y_max' => $y_max['y_max'],
 	            'luminaire_repo' => $luminaire_repo,
 	            'run_repo' => $run_repo,
+	            'log_repo' => $log_repo,
 	            'clusters' => $clusters,
         ]);
 		}

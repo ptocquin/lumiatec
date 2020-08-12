@@ -51,6 +51,11 @@ class Log
      */
     private $remoteId;
 
+    /**
+     * @ORM\ManyToOne(targetEntity=Controller::class, inversedBy="logs")
+     */
+    private $controller;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -136,6 +141,18 @@ class Log
     public function setRemoteId(int $remoteId): self
     {
         $this->remoteId = $remoteId;
+
+        return $this;
+    }
+
+    public function getController(): ?Controller
+    {
+        return $this->controller;
+    }
+
+    public function setController(?Controller $controller): self
+    {
+        $this->controller = $controller;
 
         return $this;
     }

@@ -59,6 +59,11 @@ class Controller
      */
     private $clusters;
 
+    /**
+     * @ORM\OneToMany(targetEntity=Log::class, mappedBy="controller")
+     */
+    private $logs;
+
 
 
     public function __construct()
@@ -68,6 +73,7 @@ class Controller
         $this->groups = new ArrayCollection();
         $this->users = new ArrayCollection();
         $this->clusters = new ArrayCollection();
+        $this->logs = new ArrayCollection();
     }
 
     public function __toString()
@@ -210,6 +216,37 @@ class Controller
             // set the owning side to null (unless already changed)
             if ($cluster->getController() === $this) {
                 $cluster->setController(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Log[]
+     */
+    public function getLogs(): Collection
+    {
+        return $this->logs;
+    }
+
+    public function addLog(Log $log): self
+    {
+        if (!$this->logs->contains($log)) {
+            $this->logs[] = $log;
+            $log->setController($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLog(Log $log): self
+    {
+        if ($this->logs->contains($log)) {
+            $this->logs->removeElement($log);
+            // set the owning side to null (unless already changed)
+            if ($log->getController() === $this) {
+                $log->setController(null);
             }
         }
 

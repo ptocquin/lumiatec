@@ -1264,7 +1264,7 @@ class SetupController extends AbstractController
 			$statusCode = $response->getStatusCode();
 			$content = $response->getContent();
 
-			if ($statusCode == 200) {
+			if ($statusCode == 200 || $statusCode == 204) {
 
 				$session->getFlashBag()->add(
 	                'info',
@@ -1800,5 +1800,77 @@ class SetupController extends AbstractController
         return $this->redirectToRoute('view-controller', ['id' => $controller->getId()]);        
 
     }
+
+     /**
+     * @Route("/remote/logs/{controller}", name="remote-logs")
+     */
+    public function remoteLogs(Request $request, Controller $controller)
+    {
+    	$session = new Session;
+
+        $auth_checker = $this->get('security.authorization_checker');
+        $token = $this->get('security.token_storage')->getToken();
+        $user = $token->getUser();
+
+    	$em = $this->getDoctrine()->getManager();
+
+		$httpClient = HttpClient::create(['headers' => [
+			    'X-AUTH-TOKEN' => $controller->getAuthToken(),
+			]]);
+    	$base_url = $controller->getUrl();
+
+    	// Sync Luminaires
+		try {
+			$response = $httpClient->request('GET', $base_url.'/api/logs', ['headers' => ['accept' =>'application/json'], 'timeout' => 20]);
+			$statusCode = $response->getStatusCode();
+
+		} catch (\Exception $e) {
+			$controller->setStatus(1);
+			$em->flush();
+			$session->getFlashBag()->add(
+		        'info',
+		        'The controller ('.$controller->getName().') was not reachable... '
+		    );
+		    return $this->redirectToRoute('view-controller', ['id' => $controller->getId()]);
+		}
+
+		if ($statusCode != 200) {
+			$session->getFlashBag()->add(
+		        'info',
+		        'The request failed with status code: '.$statusCode
+		    );
+		    return $this->redirectToRoute('view-controller', ['id' => $controller->getId()]);
+		}
+
+		// $contentType = $response->getHeaders()['content-type'][0];
+		// $content = $response->getContent();
+		$remote_logs = $response->toArray();
+
+		foreach ($remote_logs as $remote_log) {
+			// dd($remote_log);
+			$luminaire = $this->getDoctrine()->getRepository(Luminaire::class)->findOneByAddress($remote_log['value']['address']);
+			$test_log = $this->getDoctrine()->getRepository(Log::class)->findOneByControllerLightingTime($controller, $luminaire, date_create($remote_log['time']));
+			if(is_null($test_log)){
+				// dd('test');
+				if (is_null($luminaire)) {
+					// dd('emepty luminaire');
+					continue;
+				}
+				$log = new Log;
+				$log->setType($remote_log['type']);
+				$log->setController($controller);
+				$log->setLuminaire($luminaire);
+				$log->setCluster($luminaire->getCluster());
+				$log->setTime(date_create($remote_log['time']));
+				$log->setValue($remote_log['value']);
+				$log->setRemoteId($remote_log['id']);
+				$em->persist($log);
+			}
+		}
+
+		$em->flush();
+
+		return $this->redirectToRoute('view-controller', ['id' => $controller->getId()]);
+	}
 
 }
