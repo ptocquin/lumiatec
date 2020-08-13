@@ -1,4 +1,5 @@
-    {% set colors = ["primary","secondary","success","danger","warning","info"] %}
+{% set colors = ["primary","secondary","success","danger","warning","info"] %}
+{% import 'macros.twig' as macros %}
 
 <!DOCTYPE html>
 <html>
@@ -41,16 +42,14 @@
                     {% endif %}
                 </ul>
                 <ul class="navbar-nav d-block d-md-none">
-                    <div class="nav-item" href="#">
-                        <a class="nav-link" href="#">
-                            Parameters
-                        </a>
-                    </div>
-                    <div class="nav-item" href="#">
-                        <a class="nav-link" href="#">
-                            Lightings
-                        </a>
-                    </div>
+                    {% block collapseMenu %}
+                    {{ macros.menu([ 
+                        {'path': 'home', 'label': 'My Controllers', 'icon': 'fa fa-home'},
+                        {'path': 'view-lightings', 'label': 'My Lightings', 'icon': 'fa fa-lightbulb'},
+                        {'path': 'view-recipes', 'label': 'My Recipes', 'icon': 'fa fa-clipboard-list'},
+                        {'path': 'view-programs', 'label': 'My Programs', 'icon': 'fa fa-laptop-code'}
+                    ])}}
+                    {% endblock %}
                 </ul>
             </div>
         </nav>
@@ -63,56 +62,23 @@
             {% endfor %}
 	        {% block body %}
             <div class="row">
-                <div class="col-md-3 col-sm-2 d-none d-md-block">
+                <div class="col-md-3 d-none d-md-block">
                     <nav class="sidebar navbar-dark">
                         <div class="sidebar-sticky">
                             <ul class="nav flex-column">
                             	{% block sideMenu %}
-                                    <li class="nav-item p-1">
-                                        <a class="nav-link btn btn-outline-dark" href="{{ path('home') }}">
-                                            <span class="fa fa-home">
-                                            </span>
-                                            <span class="d-none d-md-inline">
-                                                My Controllers
-                                            </span>
-                                            <span class="sr-only">
-                                                (current)
-                                            </span>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item p-1">
-                                        <a class="nav-link btn btn-outline-dark" href="{{ path('view-lightings') }}">
-                                            <span class="fa fa-lightbulb">
-                                            </span>
-                                            <span class="d-none d-md-inline">
-                                                My Lightings
-                                            </span>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item p-1">
-                                        <a class="nav-link btn btn-outline-dark" href="{{ path('view-recipes') }}">
-                                            <span class="fa fa-clipboard-list">
-                                            </span>
-                                            <span class="d-none d-md-inline">
-                                                My Recipes
-                                            </span>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item p-1">
-                                        <a class="nav-link btn btn-outline-dark" href="{{ path('view-programs') }}">
-                                            <span class="fa fa-laptop-code">
-                                            </span>
-                                            <span class="d-none d-md-inline">
-                                                My Programs
-                                            </span>
-                                        </a>
-                                    </li>
+                                    {{ macros.menu([
+                                        {'path': 'home', 'label': 'My Controllers', 'icon': 'fa fa-home'},
+                                        {'path': 'view-lightings', 'label': 'My Lightings', 'icon': 'fa fa-lightbulb'},
+                                        {'path': 'view-recipes', 'label': 'My Recipes', 'icon': 'fa fa-clipboard-list'},
+                                        {'path': 'view-programs', 'label': 'My Programs', 'icon': 'fa fa-laptop-code'}
+                                    ])}}
                                 {% endblock %}
                             </ul>
                         </div>
                     </nav>
                 </div>
-                <div class="col-md-9 col-sm-10 pb-5">
+                <div class="col-md-9 col-sm-12 pb-5">
                     <main role="main">
                         <nav class="navbar navbar-dark bg-dark fixed-bottom" id="navbar-scroll">
                             <ul class="nav">

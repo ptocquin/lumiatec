@@ -67,5 +67,21 @@ class LogRepository extends ServiceEntityRepository
             ->getResult()
         ;
     }
+
+   /**
+    * @return Log[] Returns an array of Log objects
+    */
+    
+    public function getLastLog()
+    {
+        return $this->createQueryBuilder('l')
+            // ->andWhere('l.type = :type')
+            // ->setParameter('type', 'cluster_info')
+            ->orderBy('l.time', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
     
 }

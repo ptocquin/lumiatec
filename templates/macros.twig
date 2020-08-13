@@ -1,4 +1,4 @@
-{% macro datatable(rows, cols, names, styles = "table-responsive table-inverse", actions = false, modals = false) %}
+{% macro datatable(rows, cols, names, styles = "display compact", actions = false, modals = false) %}
 	{% import _self as self %}
     <table class="table {{ styles }}">
 		<thead>
@@ -31,14 +31,14 @@
 					{% if actions %}
 						<td>
 							{% for action in actions %}
-		                    	<a href="{{ path( action.path, {'id': row.id}) }}" class="btn btn-link btn-sm">{{ action.label }}</a>
+		                    	<a href="{{ path( action.path, {'id': row.id}) }}" class="{% if action.icon is defined %}btn btn-link btn-sm {{ action.icon }}{% endif %}">{% if action.label is defined %}{{ action.label }}{% endif %}</a>
 		                    {% endfor %}
 		                </td>
 	                {% endif %}
 	                {% if modals %}
 	                	<td>
 	                		{% for modal in modals %}
-	                			<a href="#" data-toggle="modal" data-target="#modal-{{ modal.id }}-{{ row.id }}">{{ modal.label }}</a>
+	                			<a href="#" class="{% if modal.icon is defined %}btn btn-link btn-sm {{ modal.icon }}{% endif %}" data-toggle="modal" data-target="#modal-{{ modal.id }}-{{ row.id }}">{% if modal.label is defined %}{{ modal.label }}{% endif %}</a>
 	                		{% endfor %}
 	                	</td>
 	                {% endif %}
@@ -62,4 +62,29 @@
 	    {{ value }}
 	{% endif %}
     {% endapply %}    
+{% endmacro %}
+
+{% macro menu(items, class = "btn btn-outline-dark btn-block") %}
+	{% for item in items %}
+		<li class="nav-item p-1">
+			{% if item.path is defined %}
+		        <a class="nav-link {{ class }}" href="{{ path(item.path) }}">
+		        	<span class="{{ item.icon }}">
+		            </span>
+		            <span class="d-inline d-xs-none">
+		                {{ item.label }}
+		            </span>
+		        </a>
+		    {% endif %}
+	        {% if item.modal is defined %}
+		        <button class="nav-link {{ class }}" data-target="#modal-{{ item.modal }}" data-toggle="modal">
+		            <span class="{{ item.icon }}">
+		            </span>
+		            <span class="d-inline d-xs-none">
+		                {{ item.label }}
+		            </span>
+		        </button>
+	        {% endif %}
+	    </li>
+	{% endfor %}
 {% endmacro %}

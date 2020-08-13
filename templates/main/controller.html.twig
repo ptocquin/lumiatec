@@ -6,8 +6,6 @@
 
 {% block panelContent %}
 
-<div class="container">
-
   {% for message in app.flashes('info') %}
     <div class="alert alert-success" role="alert">
           {{ message }}
@@ -24,332 +22,343 @@
     <a class="nav-link" id="all-tab" data-toggle="tab" href="#all" role="tab" aria-controls="all" aria-selected="false">All</a>
   </li>
 </ul>
-  <div class="tab-content" id="myTabContent">
+<div class="tab-content" id="myTabContent">
 
-    <div class="tab-pane fade show active" id="mapped" role="tabpanel" aria-labelledby="mapped-tab">
-      <div id="mapped_lightings">
-          {% if y_max is not null %}
-            {% for y in y_max..1 %}
-              <div class="card-group">
-              {% for x in 1..x_max %}
-                
-                  <div class="card {% if x_max > 3 %} w-{{ 100 / x_max }} {% else %} col-sm-6 col-md-4 {% endif %} text-white bg-dark border-light m-2">
-                    {% if luminaire_repo.getByXY(x,y, controller) is not null %}
-                    {% set luminaire = luminaire_repo.getByXY(x,y, controller) %}
-                      <div class="card-body">
-                        <div class="btn-group-vertical btn-block">
-                            <div class="btn-group">
-                                {% if log_repo.getLuminaireLastLog(luminaire.id)|length > 0 %}
-                                  {% if log_repo.getLuminaireLastLog(luminaire.id)[0].value['channels_on']|length > 0 %}
-                                    <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#modal-mapped-{{ luminaire.id }}">
-                                    {{ luminaire.address }}
-                                    <i class="fa fa-sun"></i>
-                                  {% else %}
-                                    <button class="btn btn-sm btn-dark" data-toggle="modal" data-target="#modal-mapped-{{ luminaire.id }}">
-                                    {{ luminaire.address }}
-                                    <i class="fa fa-moon"></i>
-                                  {% endif %}
-                                {% else %}
-                                  <button class="btn btn-sm btn-light" data-toggle="modal" data-target="#modal-mapped-{{ luminaire.id }}">
-                                    {{ luminaire.address }}
-                                  <i class="fa fa-question"></i>
-                                  </button>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% if luminaire.cluster is not null %}
-                        <div class="btn-group-vertical btn-block">
+  <div class="tab-pane fade show active" id="mapped" role="tabpanel" aria-labelledby="mapped-tab">
+    <div id="mapped_lightings">
+        {% if y_max is not null %}
+          {% for y in y_max..1 %}
+            <div class="card-group">
+            {% for x in 1..x_max %}
+              
+                <div class="card {% if x_max > 3 %} w-{{ 100 / x_max }} {% else %} col-sm-6 col-md-4 {% endif %} text-white bg-dark border-light m-2">
+                  {% if luminaire_repo.getByXY(x,y, controller) is not null %}
+                  {% set luminaire = luminaire_repo.getByXY(x,y, controller) %}
+                    <div class="card-body">
+                      <div class="btn-group-vertical btn-block">
                           <div class="btn-group">
-                            <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-plus" >
-                              <span>+</span>
-                              <input type="hidden" name="cluster" value="{{ luminaire.cluster.label }}">
-                              <input type="hidden" name="luminaire" value="{{ luminaire.address }}">
-                              <input name="controller" type="hidden" value="{{ controller.id }}"></input>
-                            </button>
-                            <button class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }}" data-toggle="modal" data-target="#modal-cluster-{{ luminaire.cluster.id }}">{{ luminaire.cluster.label }}</button>
-                            <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-minus" >
-                              <span>-</span>
-                              <input type="hidden" name="cluster" value="{{ luminaire.cluster.label }}">
-                              <input type="hidden" name="luminaire" value="{{ luminaire.address }}">
-                              <input name="controller" type="hidden" value="{{ controller.id }}"></input>
-                            </button>
+                              {% if log_repo.getLuminaireLastLog(luminaire.id)|length > 0 %}
+                                {% if log_repo.getLuminaireLastLog(luminaire.id)[0].value['channels_on']|length > 0 %}
+                                  <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#modal-mapped-{{ luminaire.id }}">
+                                  {{ luminaire.address }}
+                                  <i class="fa fa-sun"></i>
+                                {% else %}
+                                  <button class="btn btn-sm btn-dark" data-toggle="modal" data-target="#modal-mapped-{{ luminaire.id }}">
+                                  {{ luminaire.address }}
+                                  <i class="fa fa-moon"></i>
+                                {% endif %}
+                              {% else %}
+                                <button class="btn btn-sm btn-light" data-toggle="modal" data-target="#modal-mapped-{{ luminaire.id }}">
+                                  {{ luminaire.address }}
+                                <i class="fa fa-question"></i>
+                                </button>
+                              {% endif %}
                           </div>
+                      </div>
+                      {% if luminaire.cluster is not null %}
+                      <div class="btn-group-vertical btn-block">
+                        <div class="btn-group">
+                          <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-plus" >
+                            <span>+</span>
+                            <input type="hidden" name="cluster" value="{{ luminaire.cluster.label }}">
+                            <input type="hidden" name="luminaire" value="{{ luminaire.address }}">
+                            <input name="controller" type="hidden" value="{{ controller.id }}"></input>
+                          </button>
+                          <button class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }}" data-toggle="modal" data-target="#modal-cluster-{{ luminaire.cluster.id }}">{{ luminaire.cluster.label }}</button>
+                          <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-minus" >
+                            <span>-</span>
+                            <input type="hidden" name="cluster" value="{{ luminaire.cluster.label }}">
+                            <input type="hidden" name="luminaire" value="{{ luminaire.address }}">
+                            <input name="controller" type="hidden" value="{{ controller.id }}"></input>
+                          </button>
                         </div>
-                        {% endif %}
                       </div>
                       {% endif %}
-                  </div>
-                
-                {# </div> #}
-                {% if luminaire is defined %}
-                <div class="modal fade" id="modal-mapped-{{ luminaire.id }}">
-                  <div class="modal-dialog modal-dialog-centered" role="document">
-                    <div class="modal-content">
-                      <div class="modal-body justify-content-center">
-                        <div class="row">
-                              <div class="col">
-                                <h5>Informations</h5>
-                                {% if log_repo.getLuminaireLastLog(luminaire.id) is not empty %}
-                                  <ul>
-                                    <li>Last info: {{ log_repo.getLuminaireLastLog(luminaire.id)[0].time|date("Y-m-d H:i") }}</li>
-                                    <li>Channels on:</li>
-                                    <ol>
-                                      {% for channel in log_repo.getLuminaireLastLog(luminaire.id)[0].value['channels_on'] %}
-                                          <li>{{ channel['color'] }} => {{ channel['intensity']|round(1) }}%</li>
-                                      {% endfor %}
-                                    </ol>
-                                  </ul>
-                                {% else %}
-                                  <ul>
-                                    <li>No info for this lighting. Last log: {% if log_repo.getLastLog() is not empty %}
-                                      {{ log_repo.getLastLog()[0].time|date("Y-m-d H:i") }}{% endif %}.
-                                      <a class="" href="{{ path('remote-logs', {'controller': controller.id }) }}">Refresh</a>
-                                    </li>
-                                  </ul>                      
-                                {% endif %}
-                              </div>
-                            </div>
-                            <hr>
-                            <div class="row">
-                              <div class="col">
-                              <h5>Mapping</h5>
-                              <div class="btn-group btn-group-justified align-content-center m-auto">
-                                <button id="{{ luminaire.id }}_btn_colonne"type="button" class="btn btn-primary btn-lg clk_increment">x:
-                                  <span class="value">{{ luminaire.colonne | default(1) }}</span>
-                                  <input type="hidden" id="{{ luminaire.id }}_colonne" name="{{ luminaire.id }}_colonne" value="{{ luminaire.colonne | default(1) }}"></input>
-                                </button>
-                                <button id="{{ luminaire.id }}_btn_ligne" type="button" class="btn btn-default btn-lg clk_increment">y:
-                                  <span class="value">{{ luminaire.ligne | default(1) }}</span>
-                                  <input type="hidden" id="{{ luminaire.id }}_ligne" name="{{ luminaire.id }}_ligne" value="{{ luminaire.ligne | default(1) }}"></input>
-                                </button>
-                                
-                                
-                              </div>
-                              <button type="button" class="btn btn-success set-position">
-                                  <span>Set</span>
-                                  <input type="hidden" name="set_position" value="{{ luminaire.id }}"></input>
-                                  <input name="controller_id" type="hidden" value="{{ controller.id }}"></input>
-                                </button>
-                              <a href="{{ path('unmap-luminaire', {'luminaire': luminaire.id, 'controller': controller.id }) }}" class="btn btn-primary btn-danger">Unmap</a>
+                    </div>
+                    {% endif %}
+                </div>
+              
+              {# </div> #}
+              {% if luminaire is defined %}
+              <div class="modal fade" id="modal-mapped-{{ luminaire.id }}">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                  <div class="modal-content">
+                    <div class="modal-body justify-content-center">
+                      <div class="row">
+                            <div class="col">
+                              <h5>Informations</h5>
+                              {% if log_repo.getLuminaireLastLog(luminaire.id) is not empty %}
+                                <ul>
+                                  <li>Last info: {{ log_repo.getLuminaireLastLog(luminaire.id)[0].time|date("Y-m-d H:i") }}</li>
+                                  <li>Channels on:</li>
+                                  <ol>
+                                    {% set ledtypes = [] %}
+                                    {% for channel in log_repo.getLuminaireLastLog(luminaire.id)[0].value['channels_on'] %}
+                                      {% if channel['color'] not in ledtypes %}
+                                        <li>{{ channel['color'] }} => {{ channel['intensity']|round(1) }}%</li>
+                                        {% set ledtypes = ledtypes|merge([channel['color']]) %}
+                                        {% endif %}
+                                    {% endfor %}
+                                  </ol>
+                                </ul>
+                              {% else %}
+                                <ul>
+                                  <li>No info for this lighting. Last log: {% if log_repo.getLastLog() is not empty %}
+                                    {{ log_repo.getLastLog()[0].time|date("Y-m-d H:i") }}{% endif %}.
+                                    <a class="" href="{{ path('remote-logs', {'controller': controller.id }) }}">Refresh</a>
+                                  </li>
+                                </ul>                      
+                              {% endif %}
                             </div>
                           </div>
+                          <hr>
+                          <div class="row">
+                            <div class="col">
+                            <h5>Mapping</h5>
+                            <div class="btn-group btn-group-justified align-content-center m-auto">
+                              <button id="{{ luminaire.id }}_btn_colonne"type="button" class="btn btn-primary btn-lg clk_increment">x:
+                                <span class="value">{{ luminaire.colonne | default(1) }}</span>
+                                <input type="hidden" id="{{ luminaire.id }}_colonne" name="{{ luminaire.id }}_colonne" value="{{ luminaire.colonne | default(1) }}"></input>
+                              </button>
+                              <button id="{{ luminaire.id }}_btn_ligne" type="button" class="btn btn-default btn-lg clk_increment">y:
+                                <span class="value">{{ luminaire.ligne | default(1) }}</span>
+                                <input type="hidden" id="{{ luminaire.id }}_ligne" name="{{ luminaire.id }}_ligne" value="{{ luminaire.ligne | default(1) }}"></input>
+                              </button>
+                              
+                              
+                            </div>
+                            <button type="button" class="btn btn-success set-position">
+                                <span>Set</span>
+                                <input type="hidden" name="set_position" value="{{ luminaire.id }}"></input>
+                                <input name="controller_id" type="hidden" value="{{ controller.id }}"></input>
+                              </button>
+                            <a href="{{ path('unmap-luminaire', {'luminaire': luminaire.id, 'controller': controller.id }) }}" class="btn btn-primary btn-danger">Unmap</a>
+                          </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+
+                      <button type="button" class="btn btn-light" data-dismiss="modal" aria-label="Close">{% trans %}Cancel{% endtrans %}</button>                     
+                    </div>
+                  </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
+              </div><!-- /.modal -->
+              {% endif %}
+            {% endfor %}
+            </div>
+          {% endfor %}
+        {% endif %}</div>
+  </div>
+  <div class="tab-pane fade" id="unmapped" role="tabpanel" aria-labelledby="unmapped-tab">
+    <div id="unmapped_lightings">
+      <div class="row">
+          {% for luminaire in luminaire_repo.getNotMapped(controller) %}
+              <div class="col-sm-6 col-md-4">
+                <div class="card text-white bg-dark border-light m-2">
+                  <div class="card-body">
+                      <div class="btn-group-vertical btn-block">
+                          <div class="btn-group">
+                              <button class="btn btn-sm btn-light" data-target="#modal-unmapped-{{ luminaire.id }}" data-toggle="modal">
+                                  {{ luminaire.address }} ({{ luminaire.colonne }},{{ luminaire.ligne }})
+                                  <i class="fa fa-question">
+                                  </i>
+                              </button>
+                          </div>
+                      </div>
+                    {% if luminaire.cluster is not null %}
+                    <div class="btn-group-vertical btn-block">
+                      <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-plus">
+                          <span>+</span>
+                          <input type="hidden" name="cluster" value="{{ luminaire.cluster.label }}">
+                          <input type="hidden" name="luminaire" value="{{ luminaire.address }}">
+                          <input name="controller" type="hidden" value="{{ controller.id }}"></input>
+                        </button>
+                        <button class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }}" data-toggle="modal" data-target="#modal-cluster-{{ luminaire.cluster.id }}">{{ luminaire.cluster.label }}</button>
+                        <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-minus">
+                          <span>-</span>
+                          <input type="hidden" name="cluster" value="{{ luminaire.cluster.label }}">
+                          <input type="hidden" name="luminaire" value="{{ luminaire.address }}">
+                          <input name="controller" type="hidden" value="{{ controller.id }}"></input>
+                        </button>
+                      </div>
+                    </div>
+                    {% endif %}
+                  </div>
+
+                  <div class="modal fade" id="modal-unmapped-{{ luminaire.id }}">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                      <div class="modal-body justify-content-center">
+                          <div class="row">
+                            <div class="col">
+                              <h5>Informations</h5>
+                              {% if log_repo.getLuminaireLastLog(luminaire.id) is not empty %}
+                                <ul>
+                                  <li>Last info: {{ log_repo.getLuminaireLastLog(luminaire.id)[0].time|date("Y-m-d H:i") }}</li>
+                                  <li>Channels on:</li>
+                                  <ol>
+                                    {% set ledtypes = [] %}
+                                    {% for channel in log_repo.getLuminaireLastLog(luminaire.id)[0].value['channels_on'] %}
+                                      {% if channel['color'] not in ledtypes %}
+                                        <li>{{ channel['color'] }} => {{ channel['intensity']|round(1) }}%</li>
+                                        {% set ledtypes = ledtypes|merge([channel['color']]) %}
+                                        {% endif %}
+                                    {% endfor %}
+                                  </ol>
+                                </ul>
+                              {% else %}
+                                <ul>
+                                  <li>No info for this lighting. Last log: {% if log_repo.getLastLog() is not empty %}
+                                    {{ log_repo.getLastLog()[0].time|date("Y-m-d H:i") }}{% endif %}.
+                                    <a class="" href="{{ path('remote-logs', {'controller': controller.id }) }}">Refresh</a>
+                                  </li>
+                                </ul>                      
+                              {% endif %}
+                          </div>
+                          </div>
+                          <hr>
+                          <div class="row">
+                            <div class="col">
+                            <h5>Mapping</h5>
+                            <div class="btn-group btn-group-justified align-content-center m-auto">
+                              <button id="{{ luminaire.id }}_btn_colonne"type="button" class="btn btn-primary btn-lg clk_increment">x:
+                                <span class="value">{{ luminaire.colonne | default(1) }}</span>
+                                <input type="hidden" id="{{ luminaire.id }}_colonne" name="{{ luminaire.id }}_colonne" value="1"></input>
+                              </button>
+                              <button id="{{ luminaire.id }}_btn_ligne" type="button" class="btn btn-default btn-lg clk_increment">y:
+                                <span class="value">{{ luminaire.ligne | default(1) }}</span>
+                                <input type="hidden" id="{{ luminaire.id }}_ligne" name="{{ luminaire.id }}_ligne" value="1"></input>
+                              </button>
+                              
+                            </div>
+                            <button type="button" class="btn btn-success set-position">
+                                <span>Set</span>
+                                <input type="hidden" name="set_position" value="{{ luminaire.id }}"></input>
+                                <input name="controller_id" type="hidden" value="{{ controller.id }}"></input>
+                              </button>
+                          </div>
+                        </div>
                       </div>
 
                       <div class="modal-footer">
-
-                        <button type="button" class="btn btn-light" data-dismiss="modal" aria-label="Close">{% trans %}Cancel{% endtrans %}</button>                     
+                        
+                        <button type="button" class="btn btn-light" data-dismiss="modal" aria-label="Close">{% trans %}Close{% endtrans %}</button>                     
                       </div>
                     </div><!-- /.modal-content -->
-                  </div><!-- /.modal-dialog -->
-                </div><!-- /.modal -->
-                {% endif %}
-              {% endfor %}
+                    </div><!-- /.modal-dialog -->
+                  </div><!-- /.modal -->
               </div>
-            {% endfor %}
-          {% endif %}</div>
-    </div>
-    <div class="tab-pane fade" id="unmapped" role="tabpanel" aria-labelledby="unmapped-tab">
-      <div id="unmapped_lightings">
-        <div class="row">
-            {% for luminaire in luminaire_repo.getNotMapped(controller) %}
-                <div class="col-sm-6 col-md-4">
-                  <div class="card text-white bg-dark border-light m-2">
-                    <div class="card-body">
-                        <div class="btn-group-vertical btn-block">
-                            <div class="btn-group">
-                                <button class="btn btn-sm btn-light" data-target="#modal-unmapped-{{ luminaire.id }}" data-toggle="modal">
-                                    {{ luminaire.address }} ({{ luminaire.colonne }},{{ luminaire.ligne }})
-                                    <i class="fa fa-question">
-                                    </i>
-                                </button>
-                            </div>
-                        </div>
-                      {% if luminaire.cluster is not null %}
-                      <div class="btn-group-vertical btn-block">
-                        <div class="btn-group">
-                          <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-plus">
-                            <span>+</span>
-                            <input type="hidden" name="cluster" value="{{ luminaire.cluster.label }}">
-                            <input type="hidden" name="luminaire" value="{{ luminaire.address }}">
-                            <input name="controller" type="hidden" value="{{ controller.id }}"></input>
-                          </button>
-                          <button class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }}" data-toggle="modal" data-target="#modal-cluster-{{ luminaire.cluster.id }}">{{ luminaire.cluster.label }}</button>
-                          <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-minus">
-                            <span>-</span>
-                            <input type="hidden" name="cluster" value="{{ luminaire.cluster.label }}">
-                            <input type="hidden" name="luminaire" value="{{ luminaire.address }}">
-                            <input name="controller" type="hidden" value="{{ controller.id }}"></input>
-                          </button>
-                        </div>
-                      </div>
-                      {% endif %}
-                    </div>
-
-                    <div class="modal fade" id="modal-unmapped-{{ luminaire.id }}">
-                      <div class="modal-dialog modal-dialog-centered" role="document">
-                      <div class="modal-content">
-                        <div class="modal-body justify-content-center">
-                            <div class="row">
-                              <div class="col">
-                                <h5>Informations</h5>
-                                {% if log_repo.getLuminaireLastLog(luminaire.id) is not empty %}
-                                  <ul>
-                                    <li>Last info: {{ log_repo.getLuminaireLastLog(luminaire.id)[0].time|date("Y-m-d H:i") }}</li>
-                                    <li>Channels on:</li>
-                                    <ol>
-                                      {% for channel in log_repo.getLuminaireLastLog(luminaire.id)[0].value['channels_on'] %}
-                                          <li>{{ channel['color'] }} => {{ channel['intensity']|round(1) }}%</li>
-                                      {% endfor %}
-                                    </ol>
-                                  </ul>
-                                {% else %}
-                                  <ul>
-                                    <li>No info for this lighting. Last log: {% if log_repo.getLastLog() is not empty %}
-                                      {{ log_repo.getLastLog()[0].time|date("Y-m-d H:i") }}{% endif %}.
-                                      <a class="" href="{{ path('remote-logs', {'controller': controller.id }) }}">Refresh</a>
-                                    </li>
-                                  </ul>                      
-                                {% endif %}
-                            </div>
-                            </div>
-                            <hr>
-                            <div class="row">
-                              <div class="col">
-                              <h5>Mapping</h5>
-                              <div class="btn-group btn-group-justified align-content-center m-auto">
-                                <button id="{{ luminaire.id }}_btn_colonne"type="button" class="btn btn-primary btn-lg clk_increment">x:
-                                  <span class="value">{{ luminaire.colonne | default(1) }}</span>
-                                  <input type="hidden" id="{{ luminaire.id }}_colonne" name="{{ luminaire.id }}_colonne" value="1"></input>
-                                </button>
-                                <button id="{{ luminaire.id }}_btn_ligne" type="button" class="btn btn-default btn-lg clk_increment">y:
-                                  <span class="value">{{ luminaire.ligne | default(1) }}</span>
-                                  <input type="hidden" id="{{ luminaire.id }}_ligne" name="{{ luminaire.id }}_ligne" value="1"></input>
-                                </button>
-                                
-                              </div>
-                              <button type="button" class="btn btn-success set-position">
-                                  <span>Set</span>
-                                  <input type="hidden" name="set_position" value="{{ luminaire.id }}"></input>
-                                  <input name="controller_id" type="hidden" value="{{ controller.id }}"></input>
-                                </button>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div class="modal-footer">
-                          
-                          <button type="button" class="btn btn-light" data-dismiss="modal" aria-label="Close">{% trans %}Close{% endtrans %}</button>                     
-                        </div>
-                      </div><!-- /.modal-content -->
-                      </div><!-- /.modal-dialog -->
-                    </div><!-- /.modal -->
-                </div>
-              </div>
-            {% endfor %}</div>
-      </div>
-    </div>
-    <div class="tab-pane fade" id="all" role="tabpanel" aria-labelledby="all-tab">
-      <div id="all_lightings">
-        <div class="row">
-            {% for luminaire in luminaire_repo.findByController(controller) %}
-                <div class="col-sm-6 col-md-4">
-                  <div class="card text-white bg-dark border-light mt-2">
-                    <div class="card-body">
-                        <div class="btn-group-vertical btn-block">
-                            <div class="btn-group">
-                                <button class="btn btn-sm btn-light" data-target="#modal-all-{{ luminaire.id }}" data-toggle="modal">
-                                    {{ luminaire.address }} ({{ luminaire.colonne }},{{ luminaire.ligne }})
-                                    <i class="fa fa-question">
-                                    </i>
-                                </button>
-                            </div>
-                        </div>
-                      {% if luminaire.cluster is not null %}
-                      <div class="btn-group-vertical btn-block">
-                        <div class="btn-group">
-                          <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-plus">
-                            <span>+</span>
-                            <input type="hidden" name="cluster" value="{{ luminaire.cluster.label }}">
-                            <input type="hidden" name="luminaire" value="{{ luminaire.address }}">
-                            <input name="controller" type="hidden" value="{{ controller.id }}"></input>
-                          </button>
-                          <button class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }}" data-toggle="modal" data-target="#modal-cluster-{{ luminaire.cluster.id }}">{{ luminaire.cluster.label }}</button>
-                          <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-minus">
-                            <span>-</span>
-                            <input type="hidden" name="cluster" value="{{ luminaire.cluster.label }}">
-                            <input type="hidden" name="luminaire" value="{{ luminaire.address }}">
-                            <input name="controller" type="hidden" value="{{ controller.id }}"></input>
-                          </button>
-                        </div>
-                      </div>
-                      {% endif %}
-                    </div>
-
-                    <div class="modal fade" id="modal-all-{{ luminaire.id }}">
-                      <div class="modal-dialog modal-dialog-centered" role="document">
-                      <div class="modal-content">
-                        <div class="modal-body justify-content-center">
-                            <div class="row">
-                              <div class="col">
-                                <h5>Informations</h5>
-                                {% if log_repo.getLuminaireLastLog(luminaire.id) is not empty %}
-                                  <ul>
-                                    <li>Last info: {{ log_repo.getLuminaireLastLog(luminaire.id)[0].time|date("Y-m-d H:i") }}</li>
-                                    <li>Channels on:</li>
-                                    <ol>
-                                      {% for channel in log_repo.getLuminaireLastLog(luminaire.id)[0].value['channels_on'] %}
-                                          <li>{{ channel['color'] }} => {{ channel['intensity']|round(1) }}%</li>
-                                      {% endfor %}
-                                    </ol>
-                                  </ul>
-                                {% else %}
-                                  <ul>
-                                    <li>No info for this lighting. Last log: {% if log_repo.getLastLog() is not empty %}
-                                      {{ log_repo.getLastLog()[0].time|date("Y-m-d H:i") }}{% endif %}.
-                                      <a class="" href="{{ path('remote-logs', {'controller': controller.id }) }}">Refresh</a>
-                                    </li>
-                                  </ul>                      
-                                {% endif %}
-                            </div>
-                            </div>
-                            <hr>
-                            <div class="row">
-                              <div class="col">
-                              <h5>Mapping</h5>
-                              <div class="btn-group btn-group-justified align-content-center m-auto">
-                                <button id="{{ luminaire.id }}_btn_colonne"type="button" class="btn btn-primary btn-lg clk_increment">x:
-                                  <span class="value">{{ luminaire.colonne | default(1) }}</span>
-                                  <input type="hidden" id="{{ luminaire.id }}_colonne" name="{{ luminaire.id }}_colonne" value="1"></input>
-                                </button>
-                                <button id="{{ luminaire.id }}_btn_ligne" type="button" class="btn btn-default btn-lg clk_increment">y:
-                                  <span class="value">{{ luminaire.ligne | default(1) }}</span>
-                                  <input type="hidden" id="{{ luminaire.id }}_ligne" name="{{ luminaire.id }}_ligne" value="1"></input>
-                                </button>
-                                
-                              </div>
-                              <button type="button" class="btn btn-success set-position">
-                                  <span>Set</span>
-                                  <input type="hidden" name="set_position" value="{{ luminaire.id }}"></input>
-                                  <input name="controller_id" type="hidden" value="{{ controller.id }}"></input>
-                                </button>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div class="modal-footer">
-                          
-                          <button type="button" class="btn btn-light" data-dismiss="modal" aria-label="Close">{% trans %}Close{% endtrans %}</button>                     
-                        </div>
-                      </div><!-- /.modal-content -->
-                      </div><!-- /.modal-dialog -->
-                    </div><!-- /.modal -->
-                </div>
-              </div>
-            {% endfor %}</div>
-      </div>
+            </div>
+          {% endfor %}</div>
     </div>
   </div>
-</div><!-- Container -->
+  <div class="tab-pane fade" id="all" role="tabpanel" aria-labelledby="all-tab">
+    <div id="all_lightings">
+      <div class="row">
+          {% for luminaire in luminaire_repo.findByController(controller) %}
+              <div class="col-sm-6 col-md-4">
+                <div class="card text-white bg-dark border-light mt-2">
+                  <div class="card-body">
+                      <div class="btn-group-vertical btn-block">
+                          <div class="btn-group">
+                              <button class="btn btn-sm btn-light" data-target="#modal-all-{{ luminaire.id }}" data-toggle="modal">
+                                  {{ luminaire.address }} ({{ luminaire.colonne }},{{ luminaire.ligne }})
+                                  <i class="fa fa-question">
+                                  </i>
+                              </button>
+                          </div>
+                      </div>
+                    {% if luminaire.cluster is not null %}
+                    <div class="btn-group-vertical btn-block">
+                      <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-plus">
+                          <span>+</span>
+                          <input type="hidden" name="cluster" value="{{ luminaire.cluster.label }}">
+                          <input type="hidden" name="luminaire" value="{{ luminaire.address }}">
+                          <input name="controller" type="hidden" value="{{ controller.id }}"></input>
+                        </button>
+                        <button class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }}" data-toggle="modal" data-target="#modal-cluster-{{ luminaire.cluster.id }}">{{ luminaire.cluster.label }}</button>
+                        <button type="button" class="btn btn-sm btn-{{ colors[ luminaire.cluster.label-1 ] }} cluster cluster-minus">
+                          <span>-</span>
+                          <input type="hidden" name="cluster" value="{{ luminaire.cluster.label }}">
+                          <input type="hidden" name="luminaire" value="{{ luminaire.address }}">
+                          <input name="controller" type="hidden" value="{{ controller.id }}"></input>
+                        </button>
+                      </div>
+                    </div>
+                    {% endif %}
+                  </div>
+
+                  <div class="modal fade" id="modal-all-{{ luminaire.id }}">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                      <div class="modal-body justify-content-center">
+                          <div class="row">
+                            <div class="col">
+                              <h5>Informations</h5>
+                              {% if log_repo.getLuminaireLastLog(luminaire.id) is not empty %}
+                                <ul>
+                                  <li>Last info: {{ log_repo.getLuminaireLastLog(luminaire.id)[0].time|date("Y-m-d H:i") }}</li>
+                                  <li>Channels on:</li>
+                                  <ol>
+                                    {% set ledtypes = [] %}
+                                    {% for channel in log_repo.getLuminaireLastLog(luminaire.id)[0].value['channels_on'] %}
+                                      {% if channel['color'] not in ledtypes %}
+                                        <li>{{ channel['color'] }} => {{ channel['intensity']|round(1) }}%</li>
+                                        {% set ledtypes = ledtypes|merge([channel['color']]) %}
+                                        {% endif %}
+                                    {% endfor %}
+                                  </ol>
+                                </ul>
+                              {% else %}
+                                <ul>
+                                  <li>No info for this lighting. Last log: {% if log_repo.getLastLog() is not empty %}
+                                    {{ log_repo.getLastLog()[0].time|date("Y-m-d H:i") }}{% endif %}.
+                                    <a class="" href="{{ path('remote-logs', {'controller': controller.id }) }}">Refresh</a>
+                                  </li>
+                                </ul>                      
+                              {% endif %}
+                          </div>
+                          </div>
+                          <hr>
+                          <div class="row">
+                            <div class="col">
+                            <h5>Mapping</h5>
+                            <div class="btn-group btn-group-justified align-content-center m-auto">
+                              <button id="{{ luminaire.id }}_btn_colonne"type="button" class="btn btn-primary btn-lg clk_increment">x:
+                                <span class="value">{{ luminaire.colonne | default(1) }}</span>
+                                <input type="hidden" id="{{ luminaire.id }}_colonne" name="{{ luminaire.id }}_colonne" value="1"></input>
+                              </button>
+                              <button id="{{ luminaire.id }}_btn_ligne" type="button" class="btn btn-default btn-lg clk_increment">y:
+                                <span class="value">{{ luminaire.ligne | default(1) }}</span>
+                                <input type="hidden" id="{{ luminaire.id }}_ligne" name="{{ luminaire.id }}_ligne" value="1"></input>
+                              </button>
+                              
+                            </div>
+                            <button type="button" class="btn btn-success set-position">
+                                <span>Set</span>
+                                <input type="hidden" name="set_position" value="{{ luminaire.id }}"></input>
+                                <input name="controller_id" type="hidden" value="{{ controller.id }}"></input>
+                              </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="modal-footer">
+                        
+                        <button type="button" class="btn btn-light" data-dismiss="modal" aria-label="Close">{% trans %}Close{% endtrans %}</button>                     
+                      </div>
+                    </div><!-- /.modal-content -->
+                    </div><!-- /.modal-dialog -->
+                  </div><!-- /.modal -->
+              </div>
+            </div>
+          {% endfor %}</div>
+    </div>
+  </div>
+</div>
 
 {% for cluster in clusters %}
 <div class="modal fade" id="modal-cluster-{{ cluster.id }}">

@@ -1328,7 +1328,6 @@ class SetupController extends AbstractController
         
         return $this->render('setup/new-recipe.html.twig', [
             'form' => $form->createView(),
-            'edit' => false,
             'navtitle' => 'New Recipe',
         ]);
     }
@@ -1369,6 +1368,10 @@ class SetupController extends AbstractController
         $user = $token->getUser();
 
     	$em = $this->getDoctrine()->getManager();
+    	$programs = $recipe->getPrograms();
+    	foreach ($programs as $program) {
+    		$em->remove($program);
+    	}
 	    $em->remove($recipe);
 	    $em->flush();
         
@@ -1426,19 +1429,33 @@ class SetupController extends AbstractController
 				    'X-AUTH-TOKEN' => $controller->getAuthToken(),
 				]]);
     		$base_url = $controller->getUrl();
-			$response = $httpClient->request('POST', $base_url.'/remote/play', 
-				['json' => $data]
-			);
 
-			$statusCode = $response->getStatusCode();
-			$content = $response->getContent();
+			try {
+				$response = $httpClient->request('POST', $base_url.'/remote/play', 
+					['json' => $data]
+				);
+				$statusCode = $response->getStatusCode();
 
-			$session->getFlashBag()->add(
-                    'info',
-                    $content
-                );
+			} catch (\Exception $e) {
+				$session->getFlashBag()->add(
+			        'info',
+			        'The controller ('.$controller->getName().') was not reachable... '
+			    );
+			    return $this->redirectToRoute('view-controller', ['id' => $controller->getId()]);
+			}
 
-            return $this->redirectToRoute('view-controller', ['id' => $controller->getId()]);        
+			if ($statusCode != 200) {
+				$session->getFlashBag()->add(
+			        'info',
+			        'The request failed with status code: '.$statusCode.' '.$response->getContent()
+			    );
+
+			    return $this->redirectToRoute('view-controller', ['id' => $controller->getId()]);
+			}
+
+			$session->getFlashBag()->add('info', $response->getContent());
+
+            return $this->redirectToRoute('remote-logs', ['controller' => $controller->getId()]);        
         }
 
         return $this->render('setup/new-play.html.twig', [
@@ -1483,7 +1500,7 @@ class SetupController extends AbstractController
             );
 
 
-        return $this->redirectToRoute('view-controller', ['id' => $controller->getId()]);        
+        return $this->redirectToRoute('remote-logs', ['controller' => $controller->getId()]);        
     }
 
     /**
@@ -1609,6 +1626,8 @@ class SetupController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $data = $form->getData();
+
+            // dd($data['program']);
             
             $program = $this->getDoctrine()->getRepository(Program::class)->find($data['program']);
 
@@ -1623,7 +1642,7 @@ class SetupController extends AbstractController
 			$pp = $serializer->normalize($program, null, ['groups' => 'program']);
 			$dd = array("cluster" => $cluster->getLabel(), "run" => $data, "program" => $pp);
 
-			// die(print_r(json_encode($data)));
+			// dd(json_encode($dd['program']));
 	    	
 	    	$httpClient = HttpClient::create(['headers' => [
 				    'X-AUTH-TOKEN' => $controller->getAuthToken(),

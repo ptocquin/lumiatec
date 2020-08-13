@@ -7,13 +7,14 @@
 
 {% block panelContent %}
 <div class="row">
+    <div class="col">
     {{ macros.datatable(
         luminaires,
         ['address','serial','controller.name'],
         ['Address', 'Serial', 'Controller'],
-        'table-sm', false, [{'id': 'edit', 'label':'Edit'},{'id':'delete', 'label':'Delete'}])
+        'table-sm', false, [{'id': 'edit', 'icon':'fa fa-edit'},{'id':'delete', 'icon':'fa fa-trash'}])
     }}
-
+    </div>
 </div>
 
 {% for luminaire in luminaires %}
@@ -71,15 +72,15 @@
 <h5 class="my-3 text-center">
     Actions
 </h5>
-<li class="nav-item p-1">
-    <a class="nav-link btn btn-block btn-outline-dark" href="{{ path('new-lighting') }}">
-        <span class="fa fa-edit">
-            <span>
-                <span class="d-none d-md-inline">
-                    New lighting
-                </span>
-            </span>
-        </span>
-    </a>
-</li>
+{{ macros.menu([
+    {'path': 'new-lighting', 'label': 'New Lighting', 'icon': 'fa fa-plus'}
+    ])}}
+{% endblock %}
+
+{% block collapseMenu %}
+{{ parent() }}
+<hr>
+{{ macros.menu([
+    {'path': 'new-lighting', 'label': 'New Lighting', 'icon': 'fa fa-plus'}
+    ])}}
 {% endblock %}
