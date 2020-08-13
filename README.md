@@ -1,7 +1,10 @@
 ## Changelog
 
+# v0.1.16 (20200813)
+- minor improvements
+
 # v0.1.15
--log support added
+- log support added
 
 # v0.1.13/14 (20200811)
 - add & remove lightings, recipes and programs
