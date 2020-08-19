@@ -1,5 +1,8 @@
 ## Changelog
 
+# v0.1.17 (20200819)
+- adding graph
+
 # v0.1.16 (20200813)
 - minor improvements
 
