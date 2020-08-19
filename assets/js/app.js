@@ -14,6 +14,8 @@ require('./jquery.collection.js');
 require('@fortawesome/fontawesome-free/css/regular.min.css');
 require('@fortawesome/fontawesome-free/js/regular.js');
 
+require('chart.js')
+
 // https://stackoverflow.com/questions/48763659/no-service-fosjsroutingbundle-in-symfony-4
 const routes = require('../../public/js/fos_js_routes.json');
 import Routing from '../../vendor/friendsofsymfony/jsrouting-bundle/Resources/public/js/router.min.js';
@@ -27,6 +29,8 @@ jQuery(document).ready(function () {
 
 
 	$('.table').DataTable();
+
+	$('.toast').toast('show');
 
 	$('.alert').fadeOut(5000);
 

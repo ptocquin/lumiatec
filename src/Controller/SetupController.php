@@ -45,6 +45,8 @@ use App\Form\ProgramType;
 use App\Form\StepType;
 use App\Form\LuminaireType;
 
+use App\Service\Lumiatec;
+
 
 /**
  * @Route("/setup")
@@ -82,7 +84,7 @@ class SetupController extends AbstractController
     /**
      * @Route("/check-controllers", name="check-controllers")
      */
-    public function checkControllers(Request $request)
+    public function checkControllers(Request $request, Lumiatec $lumiatec)
     {
     	$session = new Session;
 
@@ -94,37 +96,18 @@ class SetupController extends AbstractController
 
     	$controllers = $user->getControllers();
 
+    	$messages = array();
+
     	foreach ($controllers as $controller) {
 
-    		$httpClient = HttpClient::create(['headers' => [
-				    'X-AUTH-TOKEN' => $controller->getAuthToken(),
-				]]);
-	    	$base_url = $controller->getUrl();
+    		$output = $lumiatec->getFromControllerAPI($controller, '/api/luminaires');
 
-			try {
-				$response = $httpClient->request('GET', $base_url.'/api/luminaires', ['headers' => ['accept' =>'application/json'], 'timeout' => 2]);
-				$statusCode = $response->getStatusCode();
-
-			} catch (\Exception $e) {
-				$controller->setStatus(1);
-				$em->flush();
-				$session->getFlashBag()->add(
-			        'info',
-			        'The controller ('.$controller->getName().') was not reachable... '
-			    );
-			    continue;
-			}
-
-			$controller->setStatus(0);
-
-			if ($statusCode != 200) {
-				$session->getFlashBag()->add(
-			        'info',
-			        'The request failed with status code: '.$statusCode
-			    );
-			    continue;
-				
-			}
+    		foreach ($output['messages'] as $message) {
+	    			$session->getFlashBag()->add(
+					$message['type'],
+					array('short' => $message['short'], 'message' => $message['message'])
+				);
+    		}
 		}
 
 		return $this->redirectToRoute('home');
@@ -133,7 +116,7 @@ class SetupController extends AbstractController
     /**
      * @Route("/sync-controllers", name="sync-controllers")
      */
-    public function syncControllers(Request $request)
+    public function syncControllers(Request $request, Lumiatec $lumiatec)
     {
     	$session = new Session;
 
@@ -154,37 +137,16 @@ class SetupController extends AbstractController
     	$ru_added_count = 0; // compteur des runs ajoutés
     	$l_added_count = 0; // compteur luminaires ajoutés (nouveaux)
 
+    	$messages = array();
+
     	foreach ($controllers as $controller) {
 
-    		$httpClient = HttpClient::create(['headers' => [
-				    'X-AUTH-TOKEN' => $controller->getAuthToken(),
-				]]);
-	    	$base_url = $controller->getUrl();
+    		$output = $lumiatec->getFromControllerAPI($controller, '/api/luminaires');
 
-			try {
-				$response = $httpClient->request('GET', $base_url.'/api/luminaires', ['headers' => ['accept' =>'application/json'], 'timeout' => 2]);
-				$statusCode = $response->getStatusCode();
-
-			} catch (\Exception $e) {
-				$controller->setStatus(1);
-				$em->flush();
-				$session->getFlashBag()->add(
-			        'info',
-			        'The controller ('.$controller->getName().') was not reachable... '
-			    );
-			    continue;
-			}
-
-			$controller->setStatus(0);
-
-			if ($statusCode != 200) {
-				$session->getFlashBag()->add(
-			        'info',
-			        'The request failed with status code: '.$statusCode
-			    );
-			    continue;
-				
-			}
+    		if ($output['status'] !== 200) {
+    			$messages[] = $output['messages'];
+    			continue;
+    		}
 
 			// On dissocie les luminaires précédemment associés avec ce controller
     		$old_luminaires = $controller->getLuminaires();
@@ -195,24 +157,13 @@ class SetupController extends AbstractController
     		$em->flush();
 
     		$c_count += 1;
-			// $contentType = $response->getHeaders()['content-type'][0];
-			// $content = $response->getContent();
-			$luminaires = $response->toArray();
+
+			$luminaires = json_decode($output['content'], true); //$output['content']->toArray();
+
 			foreach ($luminaires as $l) {
 				$l_count += 1;
 
-				if(is_null($l['cluster'])){
-					// $cluster = $this->getDoctrine()->getRepository(Cluster::class)->findOneBy(array(
-					// 	'label' => 1,
-					// 	'controller' => $controller,
-					// ));
-					// if(is_null($cluster)){
-					// 	$cluster = new Cluster;
-					// 	$cluster->setLabel(1);
-					// 	$cluster->setController($controller);
-					// 	$em->persist($cluster);
-					// 	$em->flush();
-					// }
+				if(is_null($l['cluster'])){	
 					$cluster = null;
 				} else {
 					$cluster = $this->getDoctrine()->getRepository(Cluster::class)->findOneBy(array(
@@ -229,401 +180,60 @@ class SetupController extends AbstractController
 				}
 
 				// Luminaires
-				if(is_null($this->getDoctrine()->getRepository(Luminaire::class)->findOneByAddress($l['address']))) {
-					$luminaire = new Luminaire;
-					$luminaire->setAddress($l['address']);
-					$luminaire->setSerial($l['serial']);
-					$luminaire->setLigne($l['ligne']);
-					$luminaire->setColonne($l['colonne']);
-					$luminaire->setController($controller);
-					$luminaire->addUser($user);
-					$luminaire->setCluster($cluster);
-					$em->persist($luminaire);
-				// Pcb
-					foreach($l['pcbs'] as $p){
-						$pcb = new Pcb;
-						$pcb->setCrc($p['crc']);
-						$pcb->setSerial($p['serial']);
-						$pcb->setN($p['n']);
-						$pcb->setType($p['type']);
-						$em->persist($pcb);
-						$luminaire->addPcb($pcb);
-					}
-
-				// Channels
-					foreach ($l['channels'] as $c) {
-						$channel = new Channel;
-						$channel->setChannel($c['channel']);
-						$channel->setIPeek($c['iPeek']);
-						$channel->setLuminaire($luminaire);
-						
-				// Leds
-						# Vérifie que la Led existe dans la base de données, sinon l'ajoute.
-                        $led = $this->getDoctrine()->getRepository(Led::class)->findOneBy(array(
-                            'wavelength' => $c['led']['wavelength'],
-                            'type' => $c['led']['type'],
-                            'manufacturer' => $c['led']['manufacturer']));
-
-                        if(is_null($led)) {
-                        	$led = new Led;
-							$led->setWavelength($c['led']['wavelength']);
-							$led->setType($c['led']['type']);
-							$led->setManufacturer($c['led']['manufacturer']);
-							$em->persist($led);
-							$em->flush();
-							$channel->setLed($led);
-                        } else {
-                        	$led->addChannel($channel);
-                        }
-						$em->persist($channel);
-					} // foreach channel
-
-					$l_added_count += 1;
-				} else {
-					$luminaire = $this->getDoctrine()->getRepository(Luminaire::class)->findOneByAddress($l['address']);
-					$luminaire->setController($controller);
-					$luminaire->setCluster($cluster);
-					$luminaire->setLigne($l['ligne']);
-					$luminaire->setColonne($l['colonne']);
-					// $em->persist($luminaire);
-				}
+				$luminaire = $this->getDoctrine()->getRepository(Luminaire::class)->findOneByAddress($l['address']);
+				$lumiatec->setLuminaire($l, $controller, $cluster, $user, $luminaire);
 			}
-
-			$em->flush();
 
 			// Sync Recipes
-			try {
-				$response = $httpClient->request('GET', $base_url.'/api/recipes', ['headers' => ['accept' =>'application/json'], 'timeout' => 20]);
-				$statusCode = $response->getStatusCode();
-
-			} catch (\Exception $e) {
-				$controller->setStatus(1);
-				$em->flush();
-				$session->getFlashBag()->add(
-			        'info',
-			        'The controller ('.$controller->getName().') was not reachable... '
-			    );
-			    continue;
-			}
-
-			if ($statusCode != 200) {
-				$session->getFlashBag()->add(
-			        'info',
-			        'The request failed with status code: '.$statusCode
-			    );
-				
-			}
-
-			$recipes = $response->toArray();
+			$output = $lumiatec->getFromControllerAPI($controller, '/api/recipes');
+			$recipes = json_decode($output['content'], true);
 			foreach ($recipes as $r) {
 				$r_count += 1;
 				$recipe = $this->getDoctrine()->getRepository(Recipe::class)->findOneBy(array('uuid' => $r['uuid'], 'user' => $user->getId()));
-				if(is_null($recipe)){
-					$r_added_count += 1;
-					$recipe = new Recipe;
-					$recipe->setUuid($r['uuid']);
-		            $recipe->setLabel($r['label']);
-		            $recipe->setDescription($r['description']);
-		            $recipe->setUser($user);
-		            $recipe->setTimestamp($r['timestamp']);
-		            foreach ($r['ingredients'] as $i) {
-
-		                $led = $this->getDoctrine()->getRepository(Led::class)->findOneBy(
-		                    array(
-		                        "wavelength" => $i['led']['wavelength'],
-		                        "type" => $i['led']['type'],
-		                        "manufacturer" => $i['led']['manufacturer']
-		                    )
-		                );
-
-		                if(is_null($led)) {
-		                    $led = new Led;
-		                    $led->setWavelength($i['led']['wavelength']);
-		                    $led->setType($i['led']['type']);
-		                    $led->setManufacturer($i['led']['manufacturer']);
-		                    $em->persist($led);
-		                }
-
-		                $ingredient = new Ingredient;
-		                $ingredient->setLed($led);
-		                $ingredient->setLevel($i['level']);
-		                $ingredient->setPwmStart($i['pwm_start']);
-			            $ingredient->setPwmStop($i['pwm_stop']);
-		                $em->persist($ingredient);
-		                $recipe->addIngredient($ingredient);
-		            }
-		            $em->persist($recipe);
-				} else {
-					if($recipe->getTimestamp() < $r['timestamp']) {
-						$recipe->setLabel($r['label']);
-			            $recipe->setDescription($r['description']);
-			            $recipe->setTimestamp($r['timestamp']);
-			            foreach ($recipe->getIngredients() as $ingredient) {
-			            	$em->remove($ingredient);
-			            }
-
-			            foreach ($r['ingredients'] as $i) {
-			                $led = $this->getDoctrine()->getRepository(Led::class)->findOneBy(
-			                    array(
-			                        "wavelength" => $i['led']['wavelength'],
-			                        "type" => $i['led']['type'],
-			                        "manufacturer" => $i['led']['manufacturer']
-			                    )
-			                );
-
-			                if(is_null($led)) {
-			                    $led = new Led;
-			                    $led->setWavelength($i['led']['wavelength']);
-			                    $led->setType($i['led']['type']);
-			                    $led->setManufacturer($i['led']['manufacturer']);
-			                    $em->persist($led);
-			                }
-			                $ingredient = new Ingredient;
-			                $ingredient->setLed($led);
-			                $ingredient->setLevel($i['level']);
-			                $ingredient->setPwmStart($i['pwm_start']);
-			                $ingredient->setPwmStop($i['pwm_stop']);
-			                $em->persist($ingredient);
-			                $recipe->addIngredient($ingredient);
-			            }
-			            $em->persist($recipe);
-					}
-					if($recipe->getTimestamp() > $r['timestamp']) {
-						$classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader(new AnnotationReader()));
-				    	$normalizer = new ObjectNormalizer($classMetadataFactory);
-						$serializer = new Serializer([$normalizer]);
-
-						$data = $serializer->normalize($recipe, null, ['groups' => 'recipe']);
-						$data = array("recipe" => $data);
-
-						// dd($data);
-				    	
-				    	$httpClient = HttpClient::create(['headers' => [
-							    'X-AUTH-TOKEN' => $controller->getAuthToken(),
-							]]);
-			    		$base_url = $controller->getUrl();
-
-			    		try {
-							$response = $httpClient->request('POST', $base_url.'/remote/update/recipe', 
-								['json' => $data]
-							);
-							$statusCode = $response->getStatusCode();
-							$content = $response->getContent();
-						} catch (\Exception $e) {
-							$session->getFlashBag()->add(
-						        'info',
-						        'The controller ('.$controller->getName().') was not reachable... '
-						    );
-						    continue;
-
-
-						}
-
-						if ($statusCode == 200) {
-							$session->getFlashBag()->add(
-						        'info',
-						        'ok !'
-						    );
-							
-						} else {
-							$session->getFlashBag()->add(
-						        'info',
-						        'error !'
-						    );	
-						}
-					}
-				}
+				$output = $lumiatec->setRecipe($r, $controller, $user, $recipe);
+				$messages[] = $output['messages'];
 			}
-
-			$em->flush();
 
 			// Sync Program
-			try {
-				$response = $httpClient->request('GET', $base_url.'/api/programs', ['headers' => ['accept' =>'application/json'], 'timeout' => 20]);
-				$statusCode = $response->getStatusCode();
-
-			} catch (\Exception $e) {
-				$controller->setStatus(1);
-				$em->flush();
-				$session->getFlashBag()->add(
-			        'info',
-			        'The controller ('.$controller->getName().') was not reachable... '
-			    );
-			    continue;
-			}
-
-			if ($statusCode != 200) {
-				$session->getFlashBag()->add(
-			        'info',
-			        'The request failed with status code: '.$statusCode
-			    );
-				
-			}
-
-			$programs = $response->toArray();
+			$output = $lumiatec->getFromControllerAPI($controller, '/api/programs');
+			$programs = json_decode($output['content'], true);
 			foreach ($programs as $p) {
 				$p_count += 1;
 				$program = $this->getDoctrine()->getRepository(Program::class)->findOneBy(array('uuid' => $p['uuid'], 'user' => $user->getId()));
-				if(is_null($program)){
-					$p_added_count += 1;
-					$program = new Program;
-					$program->setUuid($p['uuid']);
-					$program->setUser($user);
-					$program->setLabel($p['label']);
-					$program->setDescription($p['description']);
-					$program->setTimestamp($p['timestamp']);
-					foreach ($p['steps'] as $s) {
-						$step = new Step;
-						$step->setType($s['type']);
-						$step->setRank($s['rank']);
-						$step->setValue($s['value']);
-						if(!is_null($s['recipe'])){
-							$recipe = $this->getDoctrine()->getRepository(Recipe::class)->findOneBy(array('uuid' => $s['recipe']['uuid'], 'user' => $user->getId()));
-							$step->setRecipe($recipe);
-						}
-						$em->persist($step);
-						$program->addStep($step);
-					}
-					$em->persist($program);
-				} else {
-					if($program->getTimestamp() < $p['timestamp']) {
-						$program->setUuid($p['uuid']);
-						$program->setUser($user);
-						$program->setLabel($p['label']);
-						$program->setDescription($p['description']);
-						$program->setTimestamp($p['timestamp']);
-						foreach ($program->getSteps() as $step) {
-							$em->remove($step);
-						}
-						foreach ($p['steps'] as $s) {
-							$step = new Step;
-							$step->setType($s['type']);
-							$step->setRank($s['rank']);
-							$step->setValue($s['value']);
-							if(!is_null($s['recipe'])){
-								$recipe = $this->getDoctrine()->getRepository(Recipe::class)->findOneBy(array('uuid' => $s['recipe']['uuid'], 'user' => $user->getId()));
-								$step->setRecipe($recipe);
-							}
-							$em->persist($step);
-							$program->addStep($step);
-						}
-					}
-					if($program->getTimestamp() > $p['timestamp']) {
-						$classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader(new AnnotationReader()));
-				    	$normalizer = new ObjectNormalizer($classMetadataFactory);
-						$serializer = new Serializer([$normalizer]);
-
-						$data = $serializer->normalize($program, null, ['groups' => 'program']);
-						$data = array("program" => $data);
-
-						// dd($data);
-				    	
-				    	$httpClient = HttpClient::create(['headers' => [
-							    'X-AUTH-TOKEN' => $controller->getAuthToken(),
-							]]);
-			    		$base_url = $controller->getUrl();
-
-			    		try {
-							$response = $httpClient->request('POST', $base_url.'/remote/update/program', 
-								['json' => $data]
-							);
-							$statusCode = $response->getStatusCode();
-							$content = $response->getContent();
-						} catch (\Exception $e) {
-							$session->getFlashBag()->add(
-						        'info',
-						        'The controller ('.$controller->getName().') was not reachable... '
-						    );
-
-						    dd($e);
-						    continue;
-
-
-						}
-
-						if ($statusCode == 200) {
-							$session->getFlashBag()->add(
-						        'info',
-						        'ok !'
-						    );
-							
-						} else {
-							$session->getFlashBag()->add(
-						        'info',
-						        'error !'
-						    );	
-						}
-					}
-				}
+				$output = $lumiatec->setProgram($p, $controller, $user, $program);
+				$messages[] = $output['messages'];
 			}
-
-			$em->flush();
+			// $programs = $this->getDoctrine()->getRepository(Program::class)->findByUser($user);
+			// foreach ($programs as $program) {
+			// 	$p_count += 1;
+			// 	$output = $lumiatec->setProgram(null, $controller, $user, $program);
+			// 	$messages[] = $output['messages'];
+			// }
 
 			// Sync Run
-			try {
-				$response = $httpClient->request('GET', $base_url.'/api/runs', ['headers' => ['accept' =>'application/json'], 'timeout' => 20]);
-				$statusCode = $response->getStatusCode();
-
-			} catch (\Exception $e) {
-				$controller->setStatus(1);
-				$em->flush();
-				$session->getFlashBag()->add(
-			        'info',
-			        'The controller ('.$controller->getName().') was not reachable... '
-			    );
-			    continue;
-			}
-
-			if ($statusCode != 200) {
-				$session->getFlashBag()->add(
-			        'info',
-			        'The request failed with status code: '.$statusCode
-			    );
-				
-			}
-
-			$runs = $response->toArray();
+			$output = $lumiatec->getFromControllerAPI($controller, '/api/runs');
+			$runs = json_decode($output['content'], true);
 			foreach ($runs as $r) {
 				$ru_count += 1;
 				$run = $this->getDoctrine()->getRepository(Run::class)->findOneBy(array('uuid' => $r['uuid'], 'user' => $user->getId()));
-				if(is_null($run)){
-					$ru_added_count += 1;
-					$run = new Run;
-					$run->setUuid($r['uuid']);
-					$run->setUser($user);
-					$run->setLabel($r['label']);
-					$run->setDescription($r['description']);
-					$run->setStart(new \DateTime($r['start']));
-					$run->setDateEnd(new \DateTime($r['dateend']));
-					$run->setStatus($r['status']);
-					if(!is_null($r['cluster'])){
-						$cluster = $this->getDoctrine()->getRepository(Cluster::class)->findOneBy(array('label' => $r['cluster']['label'], 'controller' => $controller));
-						$run->setCluster($cluster);
-					}
-					if(!is_null($r['program'])){
-						$program = $this->getDoctrine()->getRepository(Program::class)->findOneBy(array('uuid' => $r['program']['uuid'], 'user' => $user->getId()));
-						$run->setProgram($program);
-					}
-					foreach ($r['steps'] as $s) {
-						$step = new RunStep;
-						$step->setStart(new \DateTime($s['start']));
-						$step->setCommand($s['command']);
-						$step->setStatus($s['status']);
-						$em->persist($step);
-						$run->addRunStep($step);
-					}
-					$em->persist($run);
-				}
+				$output = $lumiatec->setRun($r, $controller, $user, $run);
+				$messages[] = $output['messages'];
 			}
-
     	}
 
-    	$em->flush();
+    	foreach ($messages as $message) {
+    		foreach ($message as $m) {
+    			$session->getFlashBag()->add(
+					$m['type'],
+					array('short' => $m['short'], 'message' => $m['message'])
+				);
+    		}
+		}
 
-    	$session->getFlashBag()->add(
-                    'info',
-                    $c_count.' Controller(s) tested, '.$l_count.' lighting(s) founds and '.$l_added_count.' new lighting(s) added. '.$r_count.' recipe(s) founds and '.$r_added_count.' new recipe(s) added. '.$ru_count.' run(s) founds and '.$ru_added_count.' new run(s) added.'
-                );
+    	// $session->getFlashBag()->add(
+     //                'info',
+     //                $c_count.' Controller(s) tested, '.$l_count.' lighting(s) founds and '.$l_added_count.' new lighting(s) added. '.$r_count.' recipe(s) founds and '.$r_added_count.' new recipe(s) added. '.$ru_count.' run(s) founds and '.$ru_added_count.' new run(s) added.'
+     //            );
 
     	return $this->redirectToRoute('home');
     }
@@ -770,6 +380,7 @@ class SetupController extends AbstractController
 				$luminaire->setCluster($cluster);
 				$luminaire->setLigne($l['ligne']);
 				$luminaire->setColonne($l['colonne']);
+				$luminaire->addUser($user);
 				// $em->persist($luminaire);
 			}
 		}
@@ -1544,19 +1155,21 @@ class SetupController extends AbstractController
     /**
      * @Route("/programs/edit/{id}", name="edit-program")
      */
-    public function editProgram(Request $request, Program $program)
+    public function editProgram(Request $request, Lumiatec $lumiatec, Program $program)
     {
-        $em = $this->getDoctrine()->getManager();
+    	$session = new Session;
+        $auth_checker = $this->get('security.authorization_checker');
+        $token = $this->get('security.token_storage')->getToken();
+        $user = $token->getUser();
 
-        $program->setTimestamp(time());
+        $em = $this->getDoctrine()->getManager();
+        $timestamp = time();
+        $program->setTimestamp($timestamp);
         $form = $this->createForm(ProgramType::class, $program);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            // $em->persist($recipe);
             $em->flush();
-
             return $this->redirectToRoute('view-programs');
         }
         

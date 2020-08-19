@@ -74,6 +74,11 @@ class Run
      */
     private $timestamp;
 
+    public function __toString()
+    {
+        return $this->label;
+    }
+
     public function __construct()
     {
         $this->runSteps = new ArrayCollection();

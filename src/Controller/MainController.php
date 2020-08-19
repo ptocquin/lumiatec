@@ -47,36 +47,34 @@ class MainController extends AbstractController
 
     	$em = $this->getDoctrine()->getManager();
 
-    	$controller = new Controller;
-    	$controller->addUser($user);
-        $form = $this->createForm(ControllerType::class, $controller);
+    	// $controller = new Controller;
+    	// $controller->addUser($user);
+        $form = $this->createForm(ControllerType::class);
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
-        	$em->persist($controller);
+        	$data = $form->getData();
+        	$controller = $this->getDoctrine()->getRepository(Controller::class)->findOneByUrl($data->getUrl());
+        	if(is_null($controller)){
+        		$controller = new Controller;
+       			$controller->setUrl($data->getUrl());
+       			$controller->setName($data->getName());
+       			$controller->setAuthToken($data->getAuthToken());
+       			$controller->addUser($user);
+       			$em->persist($controller);
+        	} else {
+        		$controller->addUser($user);
+        	}
         	$em->flush();
 
         	return $this->redirectToRoute('home');
         }
-    	
-  //   	$httpClient = HttpClient::create();
-  //   	$base_url = 'http://localhost:8000';
-		// $response = $httpClient->request('GET', $base_url.'/api/luminaires', ['headers' => ['accept' =>'application/json']]);
-
-		// $statusCode = $response->getStatusCode();
-		// $contentType = $response->getHeaders()['content-type'][0];
-		// // $content = $response->getContent();
-		// $luminaires = $response->toArray();
-		// $list = array();
-		// foreach ($luminaires as $l) {
-		// 	$list[] = $l['address'];
-		// }
-		// $content = ['id' => 521583, 'name' => 'symfony-docs', ...]
 
         return $this->render('main/index.html.twig', [
             'controller_name' => 'MainController',
             'luminaires' => $luminaires,//implode(", ", $list),
             'controllers' => $controllers,
             'form' => $form->createView(),
+            'logs' => $logs,
         ]);
     }
 
@@ -90,6 +88,41 @@ class MainController extends AbstractController
 			$luminaire_repo = $this->getDoctrine()->getRepository(Luminaire::class);
 			$run_repo = $this->getDoctrine()->getRepository(Run::class);
 			$log_repo = $this->getDoctrine()->getRepository(Log::class);
+
+			$luminaires = $luminaire_repo->findAll();
+			$data = array();
+			foreach ($luminaires as $luminaire) {
+				$logs = $luminaire->getLogs();
+				$label1 = $luminaire->getAddress().' light';
+				$label2 = $luminaire->getAddress().' temp';
+				if(!is_null($logs)){
+					$d1 = array();
+					$d2 = array();
+					foreach ($logs as $log) {
+						$values = $log->getValue();
+						$x = date_format($log->getTime(), "Y-m-d H:i:s");
+						// $x = $log->getTime();
+						if(empty($values['channels_on'])){
+							$y = 0;
+						} else {
+							$y = 100;
+						}
+						$y2 = ($values['led_pcb_0']+$values['led_pcb_1'])/2 ;
+
+						$d1[] = array('x' => $x, 'y' => $y);
+						$d2[] = array('x' => $x, 'y' => $y2);
+					}
+				}
+				#https://www.w3schools.com/colors/colors_palettes.asp
+				if(!empty($d1)){
+					$data[] = array('label' => $label1, 'data' => $d1, 'showLine' => true, 'fill' => false, 'borderColor' => '#b2b2b2', 'lineTension' => 0);
+				}
+				if(!empty($d2)){
+					$data[] = array('label' => $label2, 'data' => $d2, 'showLine' => true, 'fill' => false, 'borderColor' => '#f4e1d2', 'lineTension' => 1);
+				}
+			}
+
+			$dataset = array('datasets' => $data);
 
 			$x_max = $luminaire_repo->getXMax($controller);
         	$y_max = $luminaire_repo->getYMax($controller);
@@ -113,6 +146,7 @@ class MainController extends AbstractController
 	            'run_repo' => $run_repo,
 	            'log_repo' => $log_repo,
 	            'clusters' => $clusters,
+	            'dataset' => $dataset
         ]);
 		}
 
