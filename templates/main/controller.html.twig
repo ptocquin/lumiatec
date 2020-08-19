@@ -21,6 +21,9 @@
   <li class="nav-item">
     <a class="nav-link" id="all-tab" data-toggle="tab" href="#all" role="tab" aria-controls="all" aria-selected="false">All</a>
   </li>
+  <li class="nav-item">
+    <a class="nav-link" id="plot-tab" data-toggle="tab" href="#plot" role="tab" aria-controls="all" aria-selected="false">Plot</a>
+  </li>
 </ul>
 <div class="tab-content" id="myTabContent">
 
@@ -358,6 +361,20 @@
           {% endfor %}</div>
     </div>
   </div>
+  <div class="tab-pane fade" id="plot" role="tabpanel" aria-labelledby="plot-tab">
+    <div>
+      <div class="row">
+        <div class="col">
+            <div id="dataset" data-values="{{ dataset|json_encode }} "></div>
+            <div class="chart-container" style="position: relative; overflow-x: auto;overflow-y:hidden">
+              <div style="height:60vh; width:80vw;">
+                <canvas id="myChart" class="pb-5"></canvas>
+              </div>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 {% for cluster in clusters %}
@@ -515,4 +532,9 @@
     <!-- /.modal-dialog -->
 </div>
 <!-- /.modal -->
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+{{ encore_entry_script_tags('plot') }}
 {% endblock %}

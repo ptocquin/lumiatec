@@ -10,10 +10,10 @@
     <div class="row">
     {{ macros.datatable(
         runs,
-        ['label','cluster', 'start', 'dateEnd', 'status'],
+        ['label','cluster', 'start', 'date_end', 'status'],
         ['Label', 'Cluster', 'Start', 'End', 'Status', 'Actions'],
         'table-sm',
-        {'path':'delete-run', 'label': 'delete'})
+        [{'path':'delete-run', 'label': 'delete'}])
     }}
 
 
