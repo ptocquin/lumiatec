@@ -74,7 +74,6 @@ class MainController extends AbstractController
             'luminaires' => $luminaires,//implode(", ", $list),
             'controllers' => $controllers,
             'form' => $form->createView(),
-            'logs' => $logs,
         ]);
     }
 

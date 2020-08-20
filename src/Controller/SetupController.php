@@ -1436,7 +1436,7 @@ class SetupController extends AbstractController
      /**
      * @Route("/remote/logs/{controller}", name="remote-logs")
      */
-    public function remoteLogs(Request $request, Controller $controller)
+    public function remoteLogs(Request $request, Lumiatec $lumiatec, Controller $controller)
     {
     	$session = new Session;
 
@@ -1446,43 +1446,22 @@ class SetupController extends AbstractController
 
     	$em = $this->getDoctrine()->getManager();
 
-		$httpClient = HttpClient::create(['headers' => [
-			    'X-AUTH-TOKEN' => $controller->getAuthToken(),
-			]]);
-    	$base_url = $controller->getUrl();
+    	$last_log = $this->getDoctrine()->getRepository(Log::class)->getControllerLastLog($controller);
 
-    	// Sync Luminaires
-		try {
-			$response = $httpClient->request('GET', $base_url.'/api/logs', ['headers' => ['accept' =>'application/json'], 'timeout' => 20]);
-			$statusCode = $response->getStatusCode();
+    	$output = $lumiatec->postToControllerAPI($controller, '/remote/logs', array("date" => date_format($last_log->getTime(),"Y-m-d H:i:s")));
 
-		} catch (\Exception $e) {
-			$controller->setStatus(1);
-			$em->flush();
-			$session->getFlashBag()->add(
-		        'info',
-		        'The controller ('.$controller->getName().') was not reachable... '
-		    );
-		    return $this->redirectToRoute('view-controller', ['id' => $controller->getId()]);
-		}
+		$remote_logs = json_decode($output['content'], true);
 
-		if ($statusCode != 200) {
-			$session->getFlashBag()->add(
-		        'info',
-		        'The request failed with status code: '.$statusCode
-		    );
-		    return $this->redirectToRoute('view-controller', ['id' => $controller->getId()]);
-		}
-
-		// $contentType = $response->getHeaders()['content-type'][0];
-		// $content = $response->getContent();
-		$remote_logs = $response->toArray();
+		// dd($output);
+		// dd($remote_logs);
 
 		foreach ($remote_logs as $remote_log) {
-			// dd($remote_log);
+			// dd($remote_log['time']);
 			$luminaire = $this->getDoctrine()->getRepository(Luminaire::class)->findOneByAddress($remote_log['value']['address']);
-			$test_log = $this->getDoctrine()->getRepository(Log::class)->findOneByControllerLightingTime($controller, $luminaire, date_create($remote_log['time']));
-			if(is_null($test_log)){
+			$test_log = $this->getDoctrine()->getRepository(Log::class)->findByControllerLightingTime($controller, $luminaire, date_create($remote_log['time']['date']));
+
+			// dd($test_log);
+			if(empty($test_log)){
 				// dd('test');
 				if (is_null($luminaire)) {
 					// dd('emepty luminaire');
@@ -1493,7 +1472,7 @@ class SetupController extends AbstractController
 				$log->setController($controller);
 				$log->setLuminaire($luminaire);
 				$log->setCluster($luminaire->getCluster());
-				$log->setTime(date_create($remote_log['time']));
+				$log->setTime(date_create($remote_log['time']['date']));
 				$log->setValue($remote_log['value']);
 				$log->setRemoteId($remote_log['id']);
 				$em->persist($log);

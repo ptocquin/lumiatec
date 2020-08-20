@@ -45,6 +45,40 @@ class Lumiatec
         $this->em = $em;
     }
 
+    public function postToControllerAPI($controller, $uri, $data)
+    {
+	    $httpClient = HttpClient::create(['headers' => [
+			    'X-AUTH-TOKEN' => $controller->getAuthToken(),
+			]]);
+    	$base_url = $controller->getUrl();
+    	$messages = array();
+    	$output = array('status' => null, 'content' => null, 'messages' => array());
+
+		try {
+			$response = $httpClient->request('POST', $base_url.$uri, ['json' => $data]);
+			$statusCode = $response->getStatusCode();
+
+		} catch (\Exception $e) {
+			$controller->setStatus(1);
+			$this->em->flush();
+			$output['messages'][] = array('type'=> 'danger', 'short' => 'Connexion error !', 'message' => 'The controller '.$controller->getName().' was not responding... ');
+			return $output;
+		}
+
+		$controller->setStatus(0);
+		$this->em->flush();
+		$output['status'] = $statusCode;
+
+		if ($statusCode != 200) {
+			$output['messages'][] = array('type' => 'danger', 'short' => 'Connexion error !', 'message' => 'Something went wrong with the controller '.$controller->getName().'. It responds with code '.$statusCode);
+			return $output;			
+		}
+
+		$output['content'] = $response->getContent();
+		$output['messages'][] = array('type' => 'info', 'short' => 'Connexion successful !', 'message' => 'The controller ('.$controller->getName().') was successfuly connected... ');
+		return  $output;
+    }
+
     public function getFromControllerAPI($controller, $uri)
     {
 	    $httpClient = HttpClient::create(['headers' => [
