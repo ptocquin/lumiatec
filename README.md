@@ -1,5 +1,8 @@
 ## Changelog
 
+# v0.1.18 (20200820)
+- new log command
+
 # v0.1.17 (20200819)
 - adding graph
 
