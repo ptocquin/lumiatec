@@ -36,7 +36,7 @@ class LogRepository extends ServiceEntityRepository
     */
 
     
-    public function findOneByControllerLightingTime($controller, $lighting, $time): ?Log
+    public function findByControllerLightingTime($controller, $lighting, $time)
     {
         return $this->createQueryBuilder('l')
             ->andWhere('l.controller = :controller')
@@ -46,7 +46,7 @@ class LogRepository extends ServiceEntityRepository
             ->setParameter('lighting', $lighting)
             ->setParameter('time', $time)
             ->getQuery()
-            ->getOneOrNullResult()
+            ->getResult()
         ;
     }
 
@@ -65,6 +65,24 @@ class LogRepository extends ServiceEntityRepository
             ->setMaxResults(1)
             ->getQuery()
             ->getResult()
+        ;
+    }
+
+   /**
+    * @return Log
+    */
+    
+    public function getControllerLastLog($controller)
+    {
+        return $this->createQueryBuilder('l')
+            ->where('l.controller = :controller')
+            ->andWhere('l.type = :type')
+            ->setParameter('controller', $controller)
+            ->setParameter('type', 'luminaire_info')
+            ->orderBy('l.time', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult()
         ;
     }
 
